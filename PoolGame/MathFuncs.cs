@@ -9,14 +9,31 @@ namespace PoolGame
 {
 	static class MathFuncs
 	{
-		// finds the locations to put 2 points based on trajectories and a specified distance away (given that the lines have the same u-value)
-		public static Tuple<Vector2, Vector2> FindPointsAtDistance(Tuple<Vector2, Vector2> line1, Tuple<Vector2, Vector2> line2, float d)
+		// finds how much of its trajectory a moving point crossed through when the distance separating it from wall was d
+		// precondition: ball collides with wall at some point
+		public static float PathCompletedWhenCollidedWithLine(Tuple<Vector2, Vector2> path, Tuple<Vector2, Vector2> wall, float d)
+		{
+			Vector2 unitPath = Vector2.Normalize(new Vector2(path.Item2.X - path.Item1.X, path.Item2.Y - path.Item1.Y));
+			Vector2 unitWall = Vector2.Normalize(new Vector2(wall.Item2.X - wall.Item1.X, wall.Item2.Y - wall.Item1.Y));
+
+			double perpWallAngle = Math.Atan2(unitWall.Y, unitWall.X) + Math.PI / 2;
+			Vector2 dVec = new Vector2(d * (float)Math.Cos(perpWallAngle), d * (float)Math.Sin(perpWallAngle));
+
+			Vector2 l1 = path.Item1, l2 = path.Item2, w1 = wall.Item1, w2 = wall.Item2;
+
+			float u = ((l1.X + dVec.X) * (w2.Y - w1.Y) + (w1.X - w2.X) * (dVec.Y + l1.Y) + w1.Y * w2.X - w2.Y * w1.X) /
+				((l2.Y - l1.Y) * (w2.X - w1.X) + (w1.Y - w2.Y) * (l2.X - l1.X));
+			return u;
+		}
+
+		// finds how much of their trajectories 2 moving points crossed through when the distance separating them is d
+		public static float PathCompletedWhenMovingPointsCollided(Tuple<Vector2, Vector2> line1, Tuple<Vector2, Vector2> line2, float d)
 		{
 			Vector2 l1i = line1.Item1, l1f = line1.Item2, l2i = line2.Item1, l2f = line2.Item2;
 			// deltas
-			float dL1x = l1f.X - l1i.X, dL2x = l2f.X - l2i.X, 
-				dL1y = l1f.Y - l1i.Y, dL2y = l2f.Y - l2i.Y,
-				dLix = l2i.X - l1i.X, dLiy = l2i.Y - l1i.Y;
+			float dL1x = l1f.X - l1i.X, dL2x = l2f.X - l2i.X;
+			float dL1y = l1f.Y - l1i.Y, dL2y = l2f.Y - l2i.Y;
+			float dLix = l2i.X - l1i.X, dLiy = l2i.Y - l1i.Y;
 
 			// quadratic formula- derived
 			double a = Math.Pow(dL2x - dL1x, 2) + Math.Pow(dL2y - dL1y, 2);
@@ -27,7 +44,7 @@ namespace PoolGame
 			double minus = (-b - Math.Sqrt(Math.Pow(b, 2) - 4 * a * c)) / (2 * a);
 			float u = (float)Math.Min(plus, minus);
 
-			return new Tuple<Vector2, Vector2>(l1i + u * (l1f - l1i), l2i + u * (l2f - l2i));
+			return u;
 		}
 
 		// finds shortest distance between two lines
@@ -40,7 +57,7 @@ namespace PoolGame
 			return Math.Max(p1Dist, p2Dist);
 		}
 
-		// finds shortest distance between a line and a point
+		// finds shortest distance between a line and a point; found from http://paulbourke.net/geometry/pointlineplane/
 		public static float SmallestDistance(Tuple<Vector2, Vector2> line, Vector2 point)
 		{
 			// p1 is farther from point than p2

@@ -22,72 +22,132 @@ namespace PoolGame
 		}
 
 		// moves ball distance it would travel in one frame; only called if no collision was detected by CollidingWith()
-		public void Move()
+		public void Move(float completed = 0f)
 		{
-			ICollider collidingWithFirst;
+			ICollider collidingWithFirst = null;
+			// shortest distance collision to compare to
+			float shortestU = float.MaxValue;
 
 			foreach(ICollider c in GameManager.Colliders)
 			{
 				if(c != this)
 				{
-					collisions.Add(c);
+					// collision will occur
+					float? pathCompleted = c.CollisionDistance(this);
+					// finds object whose collision occurs before any other collider analyzed
+					if (pathCompleted == null && pathCompleted.Value < shortestU)
+					{
+						collidingWithFirst = c;
+						shortestU = pathCompleted.Value;
+					}
 				}
 			}
 
-			Position += Velocity * GameManager.tickInterval;
-
-			float deltaV = GameManager.COEFF_FRICTION * 9.81f * GameManager.tickInterval;
-			if(deltaV > Velocity.Length())
+			// no collision
+			if (collidingWithFirst == null)
 			{
-				Velocity = Vector2.Zero;
+				// adjusts velocity
+				Velocity = ApplyFriction(Velocity, GameManager.tickInterval);
+
+				Position += Velocity * GameManager.tickInterval;
 			}
 			else
 			{
-				Velocity -= deltaV * Vector2.Normalize(Velocity);
+				Tuple<Vector2, Vector2> t = GetTrajectoryVector();
+				// position of ball at collision
+				Vector2 collisionPos = t.Item1 + shortestU * (t.Item2 - t.Item1);
+				// velocity of ball at collision
+				Vector2 vAtCollision = ApplyFriction(Velocity, GameManager.tickInterval * shortestU);
+
+				if (collidingWithFirst is Ball otherBall)
+				{
+					Tuple<Vector2, Vector2> otherT = otherBall.GetTrajectoryVector();
+					Vector2 otherCollisionPos = otherT.Item1 + shortestU * (otherT.Item2 - otherT.Item1);
+					Vector2 otherVAtCollision = ApplyFriction(otherBall.Velocity, GameManager.tickInterval * shortestU);
+
+					// velocities of balls after collision
+					Tuple<Vector2, Vector2> newVels = MathFuncs.ElasticCollisionVels(Mass, vAtCollision, otherBall.Mass, otherVAtCollision);
+
+					// velocities at end of frame
+					Velocity = ApplyFriction(newVels.Item1, GameManager.tickInterval * (1 - shortestU));
+					otherBall.Velocity = ApplyFriction(newVels.Item2, GameManager.tickInterval * (1 - shortestU));
+
+
+					// TODO: use new 'completed' parameter and only move ball to impact point
+					Position = collisionPos + Velocity * GameManager.tickInterval * (1 - shortestU);
+					otherBall.Position = otherCollisionPos + otherBall.Velocity * GameManager.tickInterval * (1 - shortestU);
+
+					otherBall.Move();
+				}
+				else if (collidingWithFirst is Wall wall)
+				{
+					//Vector2 newVel = wall.vAtCollision
+				}
+			}
+
+			Vector2 ApplyFriction(Vector2 vel, float time)
+			{
+				Vector2 newVel = vel;
+				float deltaV = GameManager.COEFF_FRICTION * 9.81f * time;
+				return deltaV > Velocity.Length() ? Vector2.Zero : vel - deltaV * Vector2.Normalize(vel);
 			}
 		}
 
 		public Tuple<Vector2, Vector2> GetTrajectoryVector() => new Tuple<Vector2, Vector2>(Position, Position + Velocity * GameManager.tickInterval);
 
-		// true -> re-adds this ball to list of balls that are moving to check for further collisions
+		// returns float in [0-1] indicating how much of path objects completed when collided, or null if no collision
 		// note: this -> 'victim' ball, other -> likely the ball doing the colliding; moves the ball if a collision is detected
-		public bool WillCollideWith(Ball ball)
+		public float? CollisionDistance(Ball ball)
 		{
 			Tuple<Vector2, Vector2> traj = GetTrajectoryVector();
 			Tuple<Vector2, Vector2> otherTraj = ball.GetTrajectoryVector();
 
 			// smallest distance between the trajectories of the two balls in collision
-			float smallestDist = Velocity == Vector2.Zero ? 
-				MathFuncs.SmallestDistance(otherTraj, Position) : 
+			float smallestDist = Velocity == Vector2.Zero ?
+				MathFuncs.SmallestDistance(otherTraj, Position) :
 				MathFuncs.SmallestDistance(otherTraj, traj);
 
-			return smallestDist <= 2 * RADIUS;
-
-
-			/*// place other ball into position just touching this ball if they have collided
-			if (smallestDist <= 2 * RADIUS)
+			if (smallestDist > 2 * RADIUS)
 			{
-				// positions of two balls right as they collided
-				Tuple<Vector2, Vector2> collisionPos = MathFuncs.FindPointsAtDistance(otherTraj, traj, 2 * RADIUS);
-				// portion of path completed when balls collided
-				float completed = (traj.Item2 - traj.Item1).Length() / (collisionPos.Item2 - traj.Item1).Length();
-
-				Tuple<Vector2, Vector2> newVels = MathFuncs.ElasticCollisionVels(ball.Mass, ball.Velocity, Mass, Velocity);
-				ball.Velocity = newVels.Item1;
-				Velocity = newVels.Item2;
-
-				ball.Position = collisionPos.Item1 + ball.Velocity * (1 - completed) * GameManager.tickInterval;
-				Position = collisionPos.Item2 + Velocity * (1 - completed) * GameManager.tickInterval;
-
-				return true;
+				return null;
 			}
 
-			return false;*/
+			float completed = MathFuncs.PathCompletedWhenMovingPointsCollided(otherTraj, traj, 2 * RADIUS);
+			return completed;
 		}
 
-		public float DistanceToCollision(Ball ball)
+		public void Collide(Ball ball, float pathCompleted)
 		{
-			return (ball.Position - MathFuncs.FindPointsAtDistance(ball.GetTrajectoryVector(), GetTrajectoryVector(), 2 * RADIUS).Item1).Length();
+			Tuple<Vector2, Vector2> t = GetTrajectoryVector();
+			// position of ball at collision
+			Vector2 collisionPos = t.Item1 + pathCompleted * (t.Item2 - t.Item1);
+			// velocity of ball at collision
+			Vector2 vAtCollision = ApplyFriction(Velocity, GameManager.tickInterval * pathCompleted);
+
+			Tuple<Vector2, Vector2> otherT = ball.GetTrajectoryVector();
+			Vector2 otherCollisionPos = otherT.Item1 + pathCompleted * (otherT.Item2 - otherT.Item1);
+			Vector2 otherVAtCollision = ApplyFriction(ball.Velocity, GameManager.tickInterval * pathCompleted);
+
+			// velocities of balls after collision
+			Tuple<Vector2, Vector2> newVels = MathFuncs.ElasticCollisionVels(Mass, vAtCollision, ball.Mass, otherVAtCollision);
+
+			// velocities at end of frame
+			Velocity = ApplyFriction(newVels.Item1, GameManager.tickInterval * (1 - pathCompleted));
+			ball.Velocity = ApplyFriction(newVels.Item2, GameManager.tickInterval * (1 - pathCompleted));
+
+
+			// TODO: use new 'completed' parameter and only move ball to impact point
+			Position = collisionPos + Velocity * GameManager.tickInterval * (1 - pathCompleted);
+			ball.Position = otherCollisionPos + ball.Velocity * GameManager.tickInterval * (1 - pathCompleted);
+
+			ball.Move();
+
+			Vector2 ApplyFriction(Vector2 vel, float time)
+			{
+				Vector2 newVel = vel;
+				float deltaV = GameManager.COEFF_FRICTION * 9.81f * time;
+				return deltaV > Velocity.Length() ? Vector2.Zero : vel - deltaV * Vector2.Normalize(vel);
+			}
 		}
 	}
 
@@ -100,7 +160,7 @@ namespace PoolGame
 			Position = new Vector2(0.6096f, 0.6096f);
 		}
 
-		
+
 	}
 
 	class NumberBall : Ball

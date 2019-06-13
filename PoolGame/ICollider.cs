@@ -2,9 +2,9 @@
 {
 	interface ICollider
 	{
-		// true -> re-adds this ball to list of balls that are moving to check for further collisions
-		bool WillCollideWith(Ball ball);
-		float DistanceToCollision(Ball ball);
-		//bool CheckForCollision(ICollider other);
+		// returns float in [0-1] indicating how much of path objects completed when collided, or null if no collision
+		float? CollisionDistance(Ball ball);
+
+		void Collide(Ball ball);
 	}
 }
