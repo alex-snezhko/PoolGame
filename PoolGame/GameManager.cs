@@ -37,40 +37,60 @@ namespace PoolGame
 
 		public void LookForCollisions()
 		{
-			Dictionary<Ball, Ball[]> ballCollidingWith = new Dictionary<Ball, Ball[]>();
-
-			foreach(Ball b in Colliders)
+			float u = 0f;
+			do
 			{
-				if(b.Velocity != Vector2.Zero)
+				// finds earliest collision between 2 objects (if there is a collision)
+				(Ball colliderBall, ICollider objectCollidedWith) = FindEarliestCollision(ref u);
+
+				// move every ball to shortest u
+				foreach (Ball ball in Colliders)
 				{
-					ballCollidingWith.Add(b, null);
+					ball.Move(u);
+				}
+
+				// collision detected
+				if (objectCollidedWith != null)
+				{
+					colliderBall.Collide(objectCollidedWith);
 				}
 			}
+			while (u < 1f);
+		}
 
+		private (Ball, ICollider) FindEarliestCollision(ref float minCompletion)
+		{
+			// shortest portion of balls' single-frame trajectories crossed when a collision is detected anywhere
+			float shortest = 1f;
+			// ball which collides with something the earliest
+			Ball colliderBall = null;
+			// object which participates in the earliest collision
+			ICollider objectCollidedWith = null;
 
-
-
-			List<Ball> movingBalls = new List<Ball>();
-			foreach(Ball b in Colliders)
+			foreach (Ball ball in Colliders)
 			{
-				if(b.Velocity != Vector2.Zero)
+				if (ball.Velocity != Vector2.Zero)
 				{
-					movingBalls.Add(b);
-				}
-			}
-
-			foreach(ICollider c in Colliders)
-			{
-				for(int i = 0; i < movingBalls.Count; i++)
-				{
-					if (c.CollidingWith(b) && c is Ball)
+					foreach (ICollider obstacle in Colliders)
 					{
-						movingBalls.Add((Ball)c);
+						if (obstacle != ball)
+						{
+							// collision will occur
+							float? pathCompleted = obstacle.CollisionDistance(ball);
+							// finds object whose collision occurs before any other collider analyzed
+							if (pathCompleted != null && pathCompleted.Value < shortest && pathCompleted.Value > minCompletion)
+							{
+								shortest = pathCompleted.Value;
+								colliderBall = ball;
+								objectCollidedWith = obstacle;
+							}
+						}
 					}
 				}
 			}
 
-			Move.
+			minCompletion = shortest;
+			return (colliderBall, objectCollidedWith);
 		}
 	}
 }

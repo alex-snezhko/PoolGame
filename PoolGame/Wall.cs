@@ -7,11 +7,11 @@ namespace PoolGame
 
 	class Wall : ICollider
 	{
-		Side side;
-		Vector2 tlPoint;
-		Vector2 trPoint;
-		Vector2 blPoint;
-		Vector2 brPoint;
+		readonly Side side;
+		readonly Vector2 tlPoint;
+		readonly Vector2 trPoint;
+		readonly Vector2 blPoint;
+		readonly Vector2 brPoint;
 
 		public Wall(Side side)
 		{
@@ -60,56 +60,72 @@ namespace PoolGame
 			}
 		}
 
+		// returns float in [0-1] indicating how much of path objects completed when collided, or null if no collision
 		public float? CollisionDistance(Ball other)
 		{
-			Tuple<Vector2, Vector2> traj = other.GetTrajectoryVector();
+			ValueTuple<Vector2, Vector2> traj = other.GetTrajectoryVector();
 
-			Tuple<Vector2, Vector2> diag1, main, diag2;
+			// distinct pieces of this wall
+			(ValueTuple<Vector2, Vector2> diag1, 
+				ValueTuple<Vector2, Vector2> main, 
+				ValueTuple<Vector2, Vector2> diag2) = GetWallComponents();
+
+			// distance to each wall
 			float dDiag1, dMain, dDiag2;
 
-			Tuple<Vector2, Vector2> nearestWall;
+			ValueTuple<Vector2, Vector2> nearestWall;
 			float shortest = float.MaxValue;
-
-			switch(side)
-			{
-				case Side.Top:
-					diag1 = new Tuple<Vector2, Vector2>(trPoint, brPoint);
-					main = new Tuple<Vector2, Vector2>(brPoint, blPoint);
-					diag2 = new Tuple<Vector2, Vector2>(blPoint, tlPoint);
-					break;
-				case Side.TopLeft:
-				case Side.BottomLeft:
-					diag1 = new Tuple<Vector2, Vector2>(tlPoint, trPoint);
-					main = new Tuple<Vector2, Vector2>(trPoint, brPoint);	
-					diag2 = new Tuple<Vector2, Vector2>(brPoint, blPoint);
-					break;
-				case Side.TopRight:
-				case Side.BottomRight:
-					diag1 = new Tuple<Vector2, Vector2>(brPoint, blPoint);
-					main = new Tuple<Vector2, Vector2>(blPoint, tlPoint);	
-					diag2 = new Tuple<Vector2, Vector2>(tlPoint, trPoint);
-					break;
-				default:
-					diag1 = new Tuple<Vector2, Vector2>(blPoint, tlPoint);
-					main = new Tuple<Vector2, Vector2>(tlPoint, trPoint);
-					diag2 = new Tuple<Vector2, Vector2>(trPoint, brPoint);
-					break;
-			}
 
 			dDiag1 = MathFuncs.SmallestDistance(traj, diag1);
 			dMain = MathFuncs.SmallestDistance(traj, main);
 			dDiag2 = MathFuncs.SmallestDistance(traj, diag2);
 
+			// finds which wall the ball will collide with first
 			if (dMain < dDiag1 && dMain < dDiag2) { nearestWall = main; shortest = dMain; }
 			else if (dDiag1 < dMain && dDiag1 < dDiag2) { nearestWall = diag1; shortest = dDiag1; }
 			else { nearestWall = diag2; shortest = dDiag2; }
 
+			// no collision detected between this wall and specified ball
 			if (shortest > Ball.RADIUS)
 			{
 				return null;
 			}
 
 			return MathFuncs.PathCompletedWhenCollidedWithLine(traj, nearestWall, Ball.RADIUS);
+		}
+
+		// returns the locations of the pieces of this wall e.g. the diagonal parts and main part of the wall
+		public (ValueTuple<Vector2, Vector2> diag1, ValueTuple<Vector2, Vector2> main, ValueTuple<Vector2, Vector2> diag2) GetWallComponents()
+		{
+			ValueTuple<Vector2, Vector2> diag1, main, diag2;
+
+			switch (side)
+			{
+				case Side.Top:
+					diag1 = (trPoint, brPoint);
+					main = (brPoint, blPoint);
+					diag2 = (blPoint, tlPoint);
+					break;
+				case Side.TopLeft:
+				case Side.BottomLeft:
+					diag1 = (tlPoint, trPoint);
+					main = (trPoint, brPoint);
+					diag2 = (brPoint, blPoint);
+					break;
+				case Side.TopRight:
+				case Side.BottomRight:
+					diag1 = (brPoint, blPoint);
+					main = (blPoint, tlPoint);
+					diag2 = (tlPoint, trPoint);
+					break;
+				default:
+					diag1 = (blPoint, tlPoint);
+					main = (tlPoint, trPoint);
+					diag2 = (trPoint, brPoint);
+					break;
+			}
+
+			return (diag1, main, diag2);
 		}
 	}
 }
