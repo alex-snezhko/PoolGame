@@ -17,8 +17,8 @@ namespace PoolGame
 		{
 			this.side = side;
 			const float BANK_WIDTH = 0.05f;
-			const float W = GameManager.WIDTH;
-			const float H = GameManager.HEIGHT;
+			const float W = GameManager.TABLE_WIDTH;
+			const float H = GameManager.TABLE_HEIGHT;
 			switch(side)
 			{
 				case Side.Top:

@@ -28,7 +28,7 @@ namespace PoolGame
 
 		// moves ball distance it would travel in one frame; only called if no collision was detected by CollidingWith()
 		// parameter determines how much of its single-frame trajectory this ball should move
-		public void Move(float completed = 1f)
+		public void Move(float completed)
 		{
 			if(Velocity == Vector2.Zero)
 			{
@@ -114,7 +114,10 @@ namespace PoolGame
 			Position = new Vector2(0.6096f, 0.6096f);
 		}
 
-
+		public void Shoot(Vector2 power)
+		{
+			Velocity += power;
+		}
 	}
 
 	class NumberBall : Ball
@@ -129,8 +132,8 @@ namespace PoolGame
 
 			// finds appropriate starting position and solid/striped based on number on the ball
 			solid = num <= 7 ? true : false;
-			float eightBallX = GameManager.WIDTH / 2;
-			float eightBallY = 3 * GameManager.HEIGHT / 4;
+			float eightBallX = GameManager.TABLE_WIDTH / 2;
+			float eightBallY = 3 * GameManager.TABLE_HEIGHT / 4;
 			float ballSeparation = 2 * RADIUS + 0.001f;
 			float cos60Deg = (float)Math.Cos(Math.PI / 3);
 			float sin60Deg = (float)Math.Sin(Math.PI / 3);

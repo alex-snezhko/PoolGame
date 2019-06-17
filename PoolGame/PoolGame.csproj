@@ -48,7 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ball.cs" />
-    <Compile Include="CollisionEventArgs.cs" />
+    <Compile Include="PoolCue.cs" />
     <Compile Include="ICollider.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
@@ -72,6 +72,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -85,6 +86,54 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\1ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\2ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\3ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\4ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\5ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\6ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\7ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\9ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\10ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\11ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\12ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\13ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\14ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\15ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\8ball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cueball.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

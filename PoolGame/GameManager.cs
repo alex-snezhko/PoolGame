@@ -7,23 +7,29 @@ using System.Numerics;
 
 namespace PoolGame
 {
-	class GameManager
+	static class GameManager
 	{
-		public const float WIDTH = 1.2192f; // width of table in m
-		public const float HEIGHT = 2.4384f; // height of table in m
+		public const float TABLE_WIDTH = 1.2192f; // width of table in m
+		public const float TABLE_HEIGHT = 2.4384f; // height of table in m
 		public static int tickInterval;
 		public const float COEFF_FRICTION = 0.25f;
+		
+		public static PoolCue Cue { get; private set; }
+		// [0]: cue ball, [1-15]: num balls, [16-21]: walls
+		public static ICollider[] Colliders { get; private set; }
+		// true when balls are moving, false when the player must shoot
+		public static bool InPlay { get; set; }
 
-		public static ICollider[] Colliders { get; private set; } // [0]: cue ball, [1-15]: num balls, [16-21]: walls
-		public event EventHandler<CollisionEventArgs> Move;
+		private static int numMovingBalls = 0;
 
-		public GameManager(int tickInt)
+		public static void BeginGame(int tickInt)
 		{
 			tickInterval = tickInt;
 
 			Colliders = new ICollider[16 + 6];
 
 			Colliders[0] = new CueBall();
+			Cue = new PoolCue((CueBall)Colliders[0]);
 			for (int i = 1; i <= 15; i++)
 			{
 				Colliders[i] = new NumberBall(i);
@@ -35,13 +41,30 @@ namespace PoolGame
 			}
 		}
 
-		public void LookForCollisions()
+		// moves balls to next frame
+		public static void MoveBalls()
 		{
+			foreach (Ball b in Colliders)
+			{
+				if(b.Velocity != Vector2.Zero)
+				{
+					// a ball has been detected to be moving
+					goto completed;
+				}
+			}
+			// no balls are moving
+			InPlay = false;
+			return;
+
+		completed:
+
+			// portion of one frame's trajectory which each ball has passed through
 			float u = 0f;
 			do
-			{
-				// finds earliest collision between 2 objects (if there is a collision)
-				(Ball colliderBall, ICollider objectCollidedWith) = FindEarliestCollision(ref u);
+			{ 				
+				Ball colliderBall; // 'attacker' ball which collides with another object					   
+				ICollider objectCollidedWith; // 'victim' object in collision
+				(colliderBall, objectCollidedWith) = FindEarliestCollision(ref u);
 
 				// move every ball to shortest u
 				foreach (Ball ball in Colliders)
@@ -58,7 +81,8 @@ namespace PoolGame
 			while (u < 1f);
 		}
 
-		private (Ball, ICollider) FindEarliestCollision(ref float minCompletion)
+		// finds earliest collision between 2 objects (if there is a collision); if no collision returns null references
+		private static (Ball, ICollider) FindEarliestCollision(ref float minCompletion)
 		{
 			// shortest portion of balls' single-frame trajectories crossed when a collision is detected anywhere
 			float shortest = 1f;
