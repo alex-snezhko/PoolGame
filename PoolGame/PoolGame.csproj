@@ -103,9 +103,6 @@
     <None Include="Resources\5ball.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\6ball.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\7ball.png" />
   </ItemGroup>
   <ItemGroup>
@@ -134,6 +131,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\cueball.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\6ball.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

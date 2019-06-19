@@ -22,7 +22,6 @@ namespace PoolGame
 	{
 		CueBall cueBall;
 		Vector2 posRelativeToBall = Vector2.Zero;
-		bool charging;
 
 		const float MAX_DIST = 0.25f;
 
@@ -37,7 +36,7 @@ namespace PoolGame
 		// changes position of cue based on mouse location
 		public void ChangePos(object sender, MouseEventArgs e)
 		{
-			Vector2 mouseTablePoint = MainForm.FormToTablePoint(e.Location);
+			Vector2 mouseTablePoint = GameManager.FormToTablePoint(e.Location);
 			posRelativeToBall = mouseTablePoint - cueBall.Position;
 
 			// pool cue striker can only be a maximum of MAX_DIST meters away from the cue ball

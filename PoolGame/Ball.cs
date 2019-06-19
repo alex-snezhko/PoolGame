@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Numerics;
+using System.Drawing;
 
 namespace PoolGame
 {
 	abstract class Ball : ICollider
 	{
+		private readonly PictureBox ballPic;
+
 		// x, y; using pool table size of 1.2192m x 2.4384m (4'x8') with short side as x
 		public Vector2 Position { get; protected set; }
 		public Vector2 Velocity { get; protected set; } // in m/s
@@ -19,8 +23,9 @@ namespace PoolGame
 		// how much of game frame's trajectory path this ball has completed
 		private float pathCompletedInFrame = 0f;
 
-		protected Ball()
+		protected Ball(PictureBox pic)
 		{
+			ballPic = pic;
 			Velocity = Vector2.Zero;
 		}
 
@@ -103,13 +108,35 @@ namespace PoolGame
 			float completed = MathFuncs.PathCompletedWhenMovingPointsCollided(otherTraj, traj, 2 * RADIUS);
 			return completed;
 		}
+
+		// init parameter allows for placing this ball on the screen at game startup
+		public void MovePictureBox(bool init = false)
+		{
+			// skips this chunk if this ball is being moved for game initialization
+			if (!init)
+			{
+				// if ball has not moved this frame then return to avoid excess calculations
+				(Vector2 initial, Vector2 final) = GetTrajectoryVector();
+				if (initial == final)
+				{
+					return;
+				}
+			}
+
+			// picturebox location based off top left point; make correction from position (which is center of ball)
+			Point ballTopLeft = GameManager.TableToFormPoint(Position - new Vector2(-RADIUS, RADIUS));
+			ballPic.Location = ballTopLeft;
+			
+			ballPic.Refresh();
+			ballPic.Visible = true;
+		}
 	}
 
 	class CueBall : Ball
 	{
 		protected override float Mass { get => 0.17f; } // in kg
 
-		public CueBall()
+		public CueBall(PictureBox pic) : base(pic)
 		{
 			Position = new Vector2(0.6096f, 0.6096f);
 		}
@@ -126,7 +153,7 @@ namespace PoolGame
 		public readonly bool solid; // true if solid, false if striped
 		protected override float Mass { get => 0.16f; } // in kg
 
-		public NumberBall(int num)
+		public NumberBall(PictureBox pic, int num) : base(pic)
 		{
 			number = num;
 
@@ -155,7 +182,7 @@ namespace PoolGame
 					Position = new Vector2(eightBallX, eightBallY + 2 * ballSeparation * sin60Deg);
 					break;
 				case 6:
-					Position = new Vector2(eightBallX + ballSeparation + ballSeparation * cos60Deg, eightBallY + 2 * ballSeparation * sin60Deg);
+					Position = new Vector2(eightBallX + 2 * ballSeparation, eightBallY + 2 * ballSeparation * sin60Deg);
 					break;
 				case 7:
 					Position = new Vector2(eightBallX + ballSeparation * cos60Deg, eightBallY + ballSeparation * sin60Deg);
@@ -176,7 +203,7 @@ namespace PoolGame
 					Position = new Vector2(eightBallX + ballSeparation, eightBallY);
 					break;
 				case 13:
-					Position = new Vector2(eightBallX - ballSeparation - ballSeparation * cos60Deg, eightBallY + 2 * ballSeparation * sin60Deg);
+					Position = new Vector2(eightBallX - 2 * ballSeparation, eightBallY + 2 * ballSeparation * sin60Deg);
 					break;
 				case 14:
 					Position = new Vector2(eightBallX - ballSeparation * cos60Deg, eightBallY - ballSeparation * sin60Deg);
