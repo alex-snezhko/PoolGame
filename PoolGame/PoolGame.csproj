@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ball.cs" />
+    <Compile Include="Pocket.cs" />
     <Compile Include="PoolCue.cs" />
     <Compile Include="ICollider.cs" />
     <Compile Include="MainForm.cs">

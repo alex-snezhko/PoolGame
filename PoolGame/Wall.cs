@@ -70,15 +70,13 @@ namespace PoolGame
 				ValueTuple<Vector2, Vector2> main, 
 				ValueTuple<Vector2, Vector2> diag2) = GetWallComponents();
 
-			// distance to each wall
-			float dDiag1, dMain, dDiag2;
-
 			ValueTuple<Vector2, Vector2> nearestWall;
-			float shortest = float.MaxValue;
+			float shortest;
 
-			dDiag1 = MathFuncs.SmallestDistance(traj, diag1);
-			dMain = MathFuncs.SmallestDistance(traj, main);
-			dDiag2 = MathFuncs.SmallestDistance(traj, diag2);
+			// distance to each wall
+			float dDiag1 = MathFuncs.SmallestDistance(diag1, traj);
+			float dMain = MathFuncs.SmallestDistance(main, traj);
+			float dDiag2 = MathFuncs.SmallestDistance(diag2, traj);
 
 			// finds which wall the ball will collide with first
 			if (dMain < dDiag1 && dMain < dDiag2) { nearestWall = main; shortest = dMain; }

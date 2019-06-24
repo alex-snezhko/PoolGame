@@ -15,18 +15,17 @@ namespace PoolGame
 		private static MainForm form;
 
 		// in pixels (for the form)
-		private const int START_X = 25, START_Y = 25, // table offset from top left of form
-			TABLE_W_PIX = 444, TABLE_H_PIX = 834, BORDER_WIDTH = 15,
-			PLAYAREA_W_PIX = TABLE_W_PIX - 2 * BORDER_WIDTH, PLAYAREA_H_PIX = TABLE_H_PIX - 2 * BORDER_WIDTH;
+		public const int START_X = 30, START_Y = 30, // table offset from top left of form
+			PLAYAREA_W_PIX = 400, PLAYAREA_H_PIX = 800, BORDER_WIDTH = 33; //4"
 
 		// pool ball pictureboxes to be moved for UI 
 		public static PictureBox[] ballPics;
 
 		// in SI units (for the game simulation)
-		public const float TABLE_WIDTH = 1.2192f; // width of playing area of table in m
-		public const float TABLE_HEIGHT = 2.4384f; // height of playing area of table in m
-		public const float COEFF_FRICTION = 0.25f;
-		public static int tickInterval;	
+		public const float TABLE_WIDTH = 1.2192f; // width of playing area of table in m (4')
+		public const float TABLE_HEIGHT = 2.4384f; // height of playing area of table in m (8')
+		public const float COEFF_FRICTION = 0.15f;
+		public static float tickInterval;	
 
 		public static PoolCue Cue { get; private set; }
 		// [0]: cue ball, [1-15]: num balls, [16-21]: walls
@@ -37,7 +36,7 @@ namespace PoolGame
 		public static void BeginGame(MainForm f, int tickInt)
 		{
 			form = f;
-			tickInterval = tickInt;
+			tickInterval = tickInt / 1000f;
 			CreateBalls();
 
 			Colliders = new ICollider[16 + 6];
@@ -79,14 +78,13 @@ namespace PoolGame
 			ballPics[15] = new PictureBox() { Name = "ball15", Image = Resources._15ball };
 
 			const int DIMENSION = (int)(2 * Ball.RADIUS * (PLAYAREA_W_PIX / TABLE_WIDTH));
-			Color tableColor = Color.FromArgb(76, 176, 80);
+			Color tableColor = Color.FromArgb(145, 196, 125);
 			foreach (PictureBox b in ballPics)
 			{
+				b.Enabled = false;
 				b.Size = new Size(DIMENSION, DIMENSION);
 				b.SizeMode = PictureBoxSizeMode.Zoom;
-				b.Location = new Point(0, 0);
 				b.BackColor = tableColor;
-				b.Visible = true;
 				form.Controls.Add(b);
 			}
 		}
@@ -94,25 +92,19 @@ namespace PoolGame
 		// moves balls to next frame
 		public static void MoveBalls()
 		{
-			foreach (Ball b in Colliders)
+			for (int i = 0; i < 16; i++)
 			{
-				if(b.Velocity != Vector2.Zero)
+				Ball b = (Ball)Colliders[i];
+				if (b.Velocity != Vector2.Zero)
 				{
 					// a ball has been detected to be moving
 					goto completed;
 				}
 			}
-
-			// no balls are moving
-			foreach(Ball b in Colliders)
-			{
-				// correct ball positions for next frame
-				b.MovePictureBox();
-			}
 			InPlay = false;
 			return;
 
-		completed:
+			completed:
 
 			// portion of one frame's trajectory which each ball has passed through
 			float u = 0f;
@@ -123,8 +115,9 @@ namespace PoolGame
 				(colliderBall, objectCollidedWith) = FindEarliestCollision(ref u);
 
 				// move every ball to shortest u
-				foreach (Ball ball in Colliders)
+				for (int i = 0; i < 16; i++)
 				{
+					Ball ball = (Ball)Colliders[i];
 					ball.Move(u);
 				}
 
@@ -135,9 +128,16 @@ namespace PoolGame
 				}
 			}
 			while (u < 1f);
+
+			// move all ball picture boxes once full trajectory has been completed
+			for (int i = 0; i < 16; i++)
+			{
+				Ball b = (Ball)Colliders[i];
+				b.MovePictureBox();
+			}
 		}
 
-		// finds earliest collision between 2 objects (if there is a collision); if no collision returns null references
+		// finds earliest collision between 2 objects (if there is a collision); if no collision this frame returns null references
 		private static (Ball, ICollider) FindEarliestCollision(ref float minCompletion)
 		{
 			// shortest portion of balls' single-frame trajectories crossed when a collision is detected anywhere
@@ -147,23 +147,27 @@ namespace PoolGame
 			// object which participates in the earliest collision
 			ICollider objectCollidedWith = null;
 
-			foreach (Ball ball in Colliders)
+			for (int i = 0; i < 16; i++)
 			{
-				if (ball.Velocity != Vector2.Zero)
+				Ball ball = (Ball)Colliders[i];
+
+				if (ball.Velocity == Vector2.Zero)
 				{
-					foreach (ICollider obstacle in Colliders)
+					continue;
+				}
+
+				foreach (ICollider obstacle in Colliders)
+				{
+					if (obstacle != ball)
 					{
-						if (obstacle != ball)
+						// collision will occur
+						float? pathCompleted = obstacle.CollisionDistance(ball);
+						// finds object whose collision occurs before any other collider analyzed
+						if (pathCompleted != null && pathCompleted.Value < shortest && pathCompleted.Value > minCompletion)
 						{
-							// collision will occur
-							float? pathCompleted = obstacle.CollisionDistance(ball);
-							// finds object whose collision occurs before any other collider analyzed
-							if (pathCompleted != null && pathCompleted.Value < shortest && pathCompleted.Value > minCompletion)
-							{
-								shortest = pathCompleted.Value;
-								colliderBall = ball;
-								objectCollidedWith = obstacle;
-							}
+							shortest = pathCompleted.Value;
+							colliderBall = ball;
+							objectCollidedWith = obstacle;
 						}
 					}
 				}
@@ -173,6 +177,7 @@ namespace PoolGame
 			return (colliderBall, objectCollidedWith);
 		}
 
+		// converts location on pool table to point on form
 		public static Vector2 FormToTablePoint(Point screenPoint)
 		{
 			Vector2 pointVector = new Vector2(screenPoint.X, screenPoint.Y);
@@ -180,14 +185,14 @@ namespace PoolGame
 			const float P2M_COEFF = TABLE_WIDTH / PLAYAREA_W_PIX;
 
 			// mouse location relative to top-left of pool table playing area
-			Vector2 fromTL = pointVector - new Vector2(START_X + BORDER_WIDTH, START_Y + BORDER_WIDTH);
+			Vector2 fromTableTL = pointVector - new Vector2(START_X + BORDER_WIDTH, START_Y + BORDER_WIDTH);
 
-			Vector2 tablePoint = new Vector2(fromTL.X * P2M_COEFF, (PLAYAREA_H_PIX - fromTL.Y) * P2M_COEFF);
+			Vector2 tablePoint = new Vector2(fromTableTL.X * P2M_COEFF, (PLAYAREA_H_PIX - fromTableTL.Y) * P2M_COEFF);
 			return tablePoint;
 		}
 
-		// converts pixel location on form to position on board in game units; (0,0) = bottom left of board
-		public static Point TableToFormPoint(Vector2 location)
+		// converts pixel location on form to position on table in game units; (0,0) = bottom left of board
+		public static Point PositionToFormPoint(Vector2 location)
 		{
 			// ratio of one game unit (in meters) to pixel length
 			const float M2P_COEFF = PLAYAREA_W_PIX / TABLE_WIDTH;

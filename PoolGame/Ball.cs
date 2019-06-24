@@ -29,30 +29,29 @@ namespace PoolGame
 			Velocity = Vector2.Zero;
 		}
 
-		public ValueTuple<Vector2, Vector2> GetTrajectoryVector() => new ValueTuple<Vector2, Vector2>(Position, Position + Velocity * GameManager.tickInterval);
+		public (Vector2, Vector2) GetTrajectoryVector() => (Position, Position + Velocity * GameManager.tickInterval);
 
 		// moves ball distance it would travel in one frame; only called if no collision was detected by CollidingWith()
 		// parameter determines how much of its single-frame trajectory this ball should move
 		public void Move(float completed)
 		{
-			if(Velocity == Vector2.Zero)
+			if (Velocity != Vector2.Zero)
 			{
-				return;
+				ValueTuple<Vector2, Vector2> t = GetTrajectoryVector();
+				Vector2 finalPos = t.Item1 + (t.Item2 - t.Item1) * (completed - pathCompletedInFrame);
+
+				Position = finalPos;
+				Velocity = ApplyFriction(Velocity, GameManager.tickInterval * (completed - pathCompletedInFrame));	
 			}
-
-			ValueTuple<Vector2, Vector2> t = GetTrajectoryVector();
-			Vector2 finalPos = t.Item1 + (t.Item2 - t.Item1) * (pathCompletedInFrame - completed);
-
-			Position = finalPos;
-			Velocity = ApplyFriction(Velocity, GameManager.tickInterval * (pathCompletedInFrame - completed));
 
 			pathCompletedInFrame = completed == 1f ? 0f : completed;
 
 			Vector2 ApplyFriction(Vector2 vel, float time)
 			{
-				Vector2 newVel = vel;
 				float deltaV = GameManager.COEFF_FRICTION * 9.81f * time;
-				return deltaV > Velocity.Length() ? Vector2.Zero : vel - deltaV * Vector2.Normalize(vel);
+				return deltaV > Velocity.Length() ?
+					Vector2.Zero :
+					vel - deltaV * Vector2.Normalize(vel);
 			}
 		}
 
@@ -60,9 +59,9 @@ namespace PoolGame
 		{
 			if (other is Ball otherBall)
 			{
-				ValueTuple<Vector2, Vector2> vels = MathFuncs.ElasticCollisionVels(Mass, Velocity, otherBall.Mass, otherBall.Velocity);
-				Velocity = vels.Item1;
-				otherBall.Velocity = vels.Item2;
+				(Vector2 v1, Vector2 v2) = MathFuncs.ElasticCollisionVels(Mass, Velocity, Position, otherBall.Mass, otherBall.Velocity, otherBall.Position);
+				Velocity = v1;
+				otherBall.Velocity = v2;
 			}
 			else if (other is Wall wall)
 			{
@@ -112,20 +111,17 @@ namespace PoolGame
 		// init parameter allows for placing this ball on the screen at game startup
 		public void MovePictureBox(bool init = false)
 		{
-			// skips this chunk if this ball is being moved for game initialization
-			if (!init)
+			/*// skips this chunk if this ball is being moved for game initialization
+			if (!init && Velocity == Vector2.Zero)
 			{
-				// if ball has not moved this frame then return to avoid excess calculations
-				(Vector2 initial, Vector2 final) = GetTrajectoryVector();
-				if (initial == final)
-				{
-					return;
-				}
-			}
+				return;
+			}*/
 
+			
+			Point ballCenter = GameManager.PositionToFormPoint(Position);
 			// picturebox location based off top left point; make correction from position (which is center of ball)
-			Point ballTopLeft = GameManager.TableToFormPoint(Position - new Vector2(-RADIUS, RADIUS));
-			ballPic.Location = ballTopLeft;
+			const int TL_PIX_OFFSET = (int)(RADIUS * GameManager.PLAYAREA_W_PIX / GameManager.TABLE_WIDTH);
+			ballPic.Location = ballCenter - new Size(TL_PIX_OFFSET, TL_PIX_OFFSET);
 			
 			ballPic.Refresh();
 			ballPic.Visible = true;

@@ -53,7 +53,8 @@ namespace PoolGame
 			float p1Dist = SmallestDistance(line1, line2.Item1);
 			float p2Dist = SmallestDistance(line1, line2.Item2);
 
-			return Math.Max(p1Dist, p2Dist);
+			// TODO: was Max here before
+			return Math.Min(p1Dist, p2Dist);
 		}
 
 		// finds shortest distance between a line and a point; found from http://paulbourke.net/geometry/pointlineplane/
@@ -96,14 +97,22 @@ namespace PoolGame
 		}
 
 		// gives resulting velocities of balls in collision (elastic collision)
-		public static ValueTuple<Vector2, Vector2> ElasticCollisionVels(float m1, Vector2 v1, float m2, Vector2 v2)
+		// https://en.wikipedia.org/wiki/Elastic_collision (2 dimensional)
+		public static (Vector2, Vector2) ElasticCollisionVels(float m1, Vector2 v1, Vector2 x1, float m2, Vector2 v2, Vector2 x2)
 		{
-			Vector2 v1f = (m1 - m2) / (m1 + m2) * v1 + 
+			Vector2 v1f = v1 - 2 * m2 / (m1 + m2) * (Vector2.Dot(v1 - v2, x1 - x2) / Vector2.DistanceSquared(x1, x2)) * (x1 - x2);
+
+			Vector2 v2f = v2 - 2 * m1 / (m1 + m2) * (Vector2.Dot(v2 - v1, x2 - x1) / Vector2.DistanceSquared(x1, x2)) * (x2 - x1);
+
+			return (v1f, v2f);
+
+
+			/*Vector2 v1f = (m1 - m2) / (m1 + m2) * v1 + 
 				2 * m2 / (m1 + m2) * v2;
 			Vector2 v2f = 2 * m1 / (m1 + m2) * v1 + 
 				(m2 - m1) / (m1 + m2) * v2;
 
-			return new ValueTuple<Vector2, Vector2>(v1f, v2f);
+			return (v1f, v2f);*/
 		}
 	}
 }

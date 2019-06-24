@@ -23,7 +23,7 @@ namespace PoolGame
 		CueBall cueBall;
 		Vector2 posRelativeToBall = Vector2.Zero;
 
-		const float MAX_DIST = 0.25f;
+		const float MAX_DIST = 0.5f;
 
 		public event EventHandler<ShotEventArgs> ShotCharging;
 		public event EventHandler<EventArgs> ShotCompleted;
@@ -56,15 +56,25 @@ namespace PoolGame
 		// shoots cue ball based on distance of cue striker relative to ball
 		public void Shoot(object sender, MouseEventArgs e)
 		{
+			Vector2 mouseTablePoint = GameManager.FormToTablePoint(e.Location);
+			posRelativeToBall = mouseTablePoint - cueBall.Position;
+
+			// pool cue striker can only be a maximum of MAX_DIST meters away from the cue ball
+			float dist = posRelativeToBall.Length();
+			if (dist > MAX_DIST)
+			{
+				posRelativeToBall *= MAX_DIST / dist;
+			}
+
 			if (posRelativeToBall == Vector2.Zero)
 			{
 				return;
 			}
 
-			// LMB released; max speed is 11 m/s (when cue is MAX_DIST away from cue ball)
+			// LMB released; max speed is 7 m/s (when cue is MAX_DIST away from cue ball)
 			if (e.Button == MouseButtons.Left)
 			{
-				cueBall.Shoot(11 / MAX_DIST * -posRelativeToBall);
+				cueBall.Shoot(5 / MAX_DIST * posRelativeToBall);
 				ShotCompleted(this, EventArgs.Empty);
 			}
 		}

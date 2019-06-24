@@ -21,13 +21,25 @@ namespace PoolGame
 			BeginGame(this, timer.Interval);
 			this.imgTable.SendToBack();
 
-			this.MouseMove += (sender, e) => { if (InPlay) Cue.ChangePos(sender, e); };
-			this.MouseUp += (sender, e) => { if (InPlay) Cue.Shoot(sender, e); };
+			this.MouseMove += (sender, e) =>
+			{
+				if (!InPlay)
+				{
+					Cue.ChangePos(sender, e);
+				}
+			};
+			this.MouseUp += (sender, e) =>
+			{
+				if (!InPlay)
+				{
+					Cue.Shoot(sender, e);
+				}
+			};
 
 			Cue.ShotCharging += (sender, e) =>
 			{
 				this.pbShotPower.Enabled = true;
-				this.pbShotPower.Value = e.Power;
+				//this.pbShotPower.Value = e.Power;
 			};
 			Cue.ShotCompleted += (sender, e) =>
 			{

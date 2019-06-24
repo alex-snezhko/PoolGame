@@ -38,11 +38,12 @@
 			// 
 			// imgTable
 			// 
+			this.imgTable.Enabled = false;
 			this.imgTable.Image = ((System.Drawing.Image)(resources.GetObject("imgTable.Image")));
 			this.imgTable.Location = new System.Drawing.Point(30, 30);
 			this.imgTable.Name = "imgTable";
-			this.imgTable.Size = new System.Drawing.Size(444, 834);
-			this.imgTable.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+			this.imgTable.Size = new System.Drawing.Size(466, 866);
+			this.imgTable.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
 			this.imgTable.TabIndex = 0;
 			this.imgTable.TabStop = false;
 			// 
@@ -62,14 +63,13 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(595, 859);
+			this.ClientSize = new System.Drawing.Size(584, 961);
 			this.Controls.Add(this.pbShotPower);
 			this.Controls.Add(this.imgTable);
 			this.Name = "MainForm";
 			this.Text = "Form1";
 			((System.ComponentModel.ISupportInitialize)(this.imgTable)).EndInit();
 			this.ResumeLayout(false);
-			this.PerformLayout();
 
 		}
 
