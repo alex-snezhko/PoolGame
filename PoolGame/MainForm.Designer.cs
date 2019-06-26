@@ -32,8 +32,10 @@
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
 			this.imgTable = new System.Windows.Forms.PictureBox();
 			this.timer = new System.Windows.Forms.Timer(this.components);
-			this.pbShotPower = new System.Windows.Forms.ProgressBar();
+			this.label1 = new System.Windows.Forms.Label();
+			this.imgPowerBar = new System.Windows.Forms.PictureBox();
 			((System.ComponentModel.ISupportInitialize)(this.imgTable)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.imgPowerBar)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// imgTable
@@ -52,24 +54,38 @@
 			this.timer.Interval = 10;
 			this.timer.Tick += new System.EventHandler(this.Timer_Tick);
 			// 
-			// pbShotPower
+			// label1
 			// 
-			this.pbShotPower.Location = new System.Drawing.Point(483, 256);
-			this.pbShotPower.Name = "pbShotPower";
-			this.pbShotPower.Size = new System.Drawing.Size(100, 23);
-			this.pbShotPower.TabIndex = 1;
+			this.label1.AutoSize = true;
+			this.label1.Location = new System.Drawing.Point(526, 30);
+			this.label1.Name = "label1";
+			this.label1.Size = new System.Drawing.Size(65, 13);
+			this.label1.TabIndex = 1;
+			this.label1.Text = "Shot Power:";
+			// 
+			// imgPowerBar
+			// 
+			this.imgPowerBar.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			this.imgPowerBar.Location = new System.Drawing.Point(529, 57);
+			this.imgPowerBar.Name = "imgPowerBar";
+			this.imgPowerBar.Size = new System.Drawing.Size(60, 500);
+			this.imgPowerBar.TabIndex = 2;
+			this.imgPowerBar.TabStop = false;
 			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(584, 961);
-			this.Controls.Add(this.pbShotPower);
+			this.ClientSize = new System.Drawing.Size(684, 961);
+			this.Controls.Add(this.imgPowerBar);
+			this.Controls.Add(this.label1);
 			this.Controls.Add(this.imgTable);
 			this.Name = "MainForm";
 			this.Text = "Form1";
 			((System.ComponentModel.ISupportInitialize)(this.imgTable)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.imgPowerBar)).EndInit();
 			this.ResumeLayout(false);
+			this.PerformLayout();
 
 		}
 
@@ -77,7 +93,8 @@
 
 		private System.Windows.Forms.PictureBox imgTable;
 		private System.Windows.Forms.Timer timer;
-		private System.Windows.Forms.ProgressBar pbShotPower;
+		private System.Windows.Forms.Label label1;
+		private System.Windows.Forms.PictureBox imgPowerBar;
 	}
 }
 

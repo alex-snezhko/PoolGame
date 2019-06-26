@@ -14,36 +14,54 @@ namespace PoolGame
 {
 	public partial class MainForm : Form
 	{
+		readonly Graphics powerBarGfx;
+
 		public MainForm()
 		{
 			InitializeComponent();
+			powerBarGfx = this.imgPowerBar.CreateGraphics();
+			this.Paint += (sender, e) =>
+			{
+				DrawShotPowerBar(0f);
+			};
 
 			BeginGame(this, timer.Interval);
 			this.imgTable.SendToBack();
 
 			this.MouseMove += (sender, e) =>
 			{
-				if (!InPlay)
+				if(Scratched)
+				{
+					MoveCrossHair(e.Location);
+				}
+				else if (!InPlay)
 				{
 					Cue.ChangePos(sender, e);
 				}
 			};
 			this.MouseUp += (sender, e) =>
 			{
-				if (!InPlay)
+				if (e.Button == MouseButtons.Left && !InPlay)
 				{
-					Cue.Shoot(sender, e);
+					if (Scratched)
+					{
+						PlaceCueBall(e.Location);
+					}
+					else
+					{
+						Cue.Shoot(sender, e);
+					}
 				}
 			};
 
-			Cue.ShotCharging += (sender, e) =>
+			Cue.ShotCharging += (sender, power) =>
 			{
-				this.pbShotPower.Enabled = true;
-				//this.pbShotPower.Value = e.Power;
+				DrawShotPowerBar(power);
 			};
+			// when pool cue has completed shot
 			Cue.ShotCompleted += (sender, e) =>
 			{
-				this.pbShotPower.Enabled = false;
+				DrawShotPowerBar(0f);
 
 				InPlay = true;
 				MoveBalls();			
@@ -60,6 +78,24 @@ namespace PoolGame
 			{
 				MoveBalls();
 			}
+		}
+		
+		private void DrawShotPowerBar(float val)
+		{
+			if(val > 1f)
+			{
+				return;
+			}
+
+			// erase previously drawn bars
+			powerBarGfx.Clear(Color.FromKnownColor(KnownColor.Control));
+
+			// draws power component
+			SolidBrush redBrush = new SolidBrush(Color.Red);		
+			int height = (int)Math.Round(this.imgPowerBar.Height * val);
+			Rectangle power = new Rectangle(0, this.imgPowerBar.Height - height, this.imgPowerBar.Width, height);
+			powerBarGfx.FillRectangle(redBrush, power);
+			redBrush.Dispose();
 		}
 	}
 }

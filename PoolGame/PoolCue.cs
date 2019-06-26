@@ -1,32 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Numerics;
 
 namespace PoolGame
 {
-	class ShotEventArgs : EventArgs
-	{
-		public readonly int Power;
-
-		public ShotEventArgs(int power)
-		{
-			Power = power;
-		}
-	}
-
 	class PoolCue
 	{
-		CueBall cueBall;
+		readonly CueBall cueBall;
 		Vector2 posRelativeToBall = Vector2.Zero;
 
 		const float MAX_DIST = 0.5f;
 
-		public event EventHandler<ShotEventArgs> ShotCharging;
-		public event EventHandler<EventArgs> ShotCompleted;
+		public event EventHandler<float> ShotCharging;
+		public event EventHandler ShotCompleted;
 
 		public PoolCue(CueBall cb)
 		{
@@ -48,8 +34,8 @@ namespace PoolGame
 
 			if(e.Button == MouseButtons.Left)
 			{
-				int power = (int)Math.Round(dist / MAX_DIST);
-				ShotCharging(this, new ShotEventArgs(power));
+				float power = dist / MAX_DIST;
+				ShotCharging(this, power);
 			}
 		}
 
@@ -71,12 +57,9 @@ namespace PoolGame
 				return;
 			}
 
-			// LMB released; max speed is 7 m/s (when cue is MAX_DIST away from cue ball)
-			if (e.Button == MouseButtons.Left)
-			{
-				cueBall.Shoot(5 / MAX_DIST * posRelativeToBall);
-				ShotCompleted(this, EventArgs.Empty);
-			}
+			// complete shot; max speed is 5 m/s (when cue is MAX_DIST away from cue ball)
+			cueBall.ApplyForce(5 / MAX_DIST * posRelativeToBall);
+			ShotCompleted(this, EventArgs.Empty);
 		}
 	}
 }
