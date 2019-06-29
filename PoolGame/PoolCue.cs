@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 using System.Numerics;
 
@@ -11,18 +12,15 @@ namespace PoolGame
 
 		const float MAX_DIST = 0.5f;
 
-		public event EventHandler<float> ShotCharging;
-		public event EventHandler ShotCompleted;
-
 		public PoolCue(CueBall cb)
 		{
 			cueBall = cb;
 		}
 
 		// changes position of cue based on mouse location
-		public void ChangePos(object sender, MouseEventArgs e)
+		public void ChangePos(Point mousePos)
 		{
-			Vector2 mouseTablePoint = GameManager.FormToTablePoint(e.Location);
+			Vector2 mouseTablePoint = GameManager.FormToTablePoint(mousePos);
 			posRelativeToBall = mouseTablePoint - cueBall.Position;
 
 			// pool cue striker can only be a maximum of MAX_DIST meters away from the cue ball
@@ -31,12 +29,14 @@ namespace PoolGame
 			{
 				posRelativeToBall *= MAX_DIST / dist;
 			}
+		}
 
-			if(e.Button == MouseButtons.Left)
-			{
-				float power = dist / MAX_DIST;
-				ShotCharging(this, power);
-			}
+		// returns how much power is being charged
+		public float ChargeShot()
+		{
+			float dist = posRelativeToBall.Length();
+			float power = dist / MAX_DIST;
+			return power;
 		}
 
 		// shoots cue ball based on distance of cue striker relative to ball
@@ -59,7 +59,6 @@ namespace PoolGame
 
 			// complete shot; max speed is 5 m/s (when cue is MAX_DIST away from cue ball)
 			cueBall.ApplyForce(5 / MAX_DIST * posRelativeToBall);
-			ShotCompleted(this, EventArgs.Empty);
 		}
 	}
 }

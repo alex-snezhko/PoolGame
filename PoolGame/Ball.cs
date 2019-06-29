@@ -57,22 +57,25 @@ namespace PoolGame
 
 		// returns float in [0-1] indicating how much of path objects completed when collided, or null if no collision
 		// note: this -> 'victim' ball, other -> likely the ball doing the colliding; moves the ball if a collision is detected
-		public float? CollisionDistance(Ball ball)
+		public float CollisionDistance(Ball ball)
 		{
 			(Vector2, Vector2) traj = GetTrajectoryVector();
 			(Vector2, Vector2) otherTraj = ball.GetTrajectoryVector();
 
 			// smallest distance between the trajectories of the two balls in collision
-			float smallestDist = Velocity == Vector2.Zero ?
+			/*float smallestDist = Velocity == Vector2.Zero ?
 				VectorFuncs.SmallestVectorLinePoint(otherTraj, Position).Length() :
 				VectorFuncs.SmallestDistanceTwoLines(otherTraj, traj);
 
 			if (smallestDist > 2 * RADIUS)
 			{
-				return null;
-			}
+				return null; // TODO: refactoring; not working, fix vectorfuncs
+			}*/
 
-			float completed = VectorFuncs.PathCompletedAtDFromTrajectories(otherTraj, traj, 2 * RADIUS);
+			float completed = Velocity == Vector2.Zero ?
+				VectorFuncs.PathCompletedAtDFromPoint(otherTraj, Position, 2 * RADIUS) :
+				VectorFuncs.PathCompletedAtDFromTrajectories(otherTraj, traj, 2 * RADIUS);
+
 			return completed;
 		}
 

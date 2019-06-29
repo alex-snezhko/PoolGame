@@ -38,17 +38,11 @@ namespace PoolGame
 		}
 
 		// returns float in [0-1] indicating how much of path objects completed when collided, or null if no collision
-		public float? CollisionDistance(Ball ball)
+		public float CollisionDistance(Ball ball)
 		{
 			(Vector2, Vector2) traj = ball.GetTrajectoryVector();
-			float shortest = VectorFuncs.SmallestVectorLinePoint(traj, center).Length();
 
 			const float POCKET_RADIUS = 0.057f;
-			if(shortest > POCKET_RADIUS + Ball.RADIUS)
-			{
-				return null;
-			}
-
 			float completed = VectorFuncs.PathCompletedAtDFromPoint(traj, center, POCKET_RADIUS + Ball.RADIUS);
 			return completed;
 		}

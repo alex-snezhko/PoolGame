@@ -10,29 +10,27 @@ namespace PoolGame
 		public static float PathCompletedAtDFromWall((Vector2, Vector2) path, (Vector2, Vector2) wall, float d)
 		{
 			Vector2 l1 = path.Item1, l2 = path.Item2, w1 = wall.Item1, w2 = wall.Item2;
-			Vector2 unitWall = Vector2.Normalize(new Vector2(w2.X - w1.X, w2.Y - w1.Y));
 
-			double perpWallAngle = Math.Atan2(unitWall.Y, unitWall.X) + Math.PI / 2;
+			// finds vector of d
+			double perpWallAngle = Math.Atan2(w2.Y - w1.Y, w2.X - w1.X) + Math.PI / 2;
 			Vector2 dVec = new Vector2(d * (float)Math.Cos(perpWallAngle), d * (float)Math.Sin(perpWallAngle));
 
-			float Z = (w2.Y - w1.Y) / (w2.X - w1.X);
-			float u3 = (w1.Y - l1.Y - dVec.Y + Z * (l1.X + dVec.X - w1.X)) /
-				(l2.Y - l1.Y - Z * (l2.X - l1.X));
+			float num = (w1.X + dVec.X - l1.X) * (w2.Y - w1.Y) - (w1.Y + dVec.Y - l1.Y) * (w2.X - w1.X);
+			float den = (l2.X - l1.X) * (w2.Y - w1.Y) - (l2.Y - l1.Y) * (w2.X - w1.X);
+			// moving point's u value; if NaN then lines are parallel
+			float ul = num / den;
 
-			float u2 = ((l1.X + dVec.X) * (w2.Y - w1.Y) + (w1.X - w2.X) * (dVec.Y + l1.Y) + w1.Y * w2.X - w2.Y * w1.X) /
-				((l2.Y - l1.Y) * (w2.X - w1.X) + (w1.Y - w2.Y) * (l2.X - l1.X));
+			// u value along wall
+			float uw = (w2.Y - w1.Y != 0) ?
+				(l1.Y - w1.Y - dVec.Y + ul * (l2.Y - l1.Y)) / (w2.Y - w1.Y) :
+				(l1.X - w1.X - dVec.X + ul * (l2.X - l1.X)) / (w2.X - w1.X);
 
+			if (uw < 0f || uw > 1f)
+			{
+				return float.NaN;
+			}
 
-
-
-
-			float A = (w2.Y - w1.Y) / (w2.X - w1.X); // TODO: returning infinity
-			float C = d * (A * A - 1) / (A * (float)Math.Sqrt(A * A + 1));
-
-			float u = (w1.X - l1.X + (l1.Y - w1.Y) / A + C) /
-				(l2.X - l1.X - (l2.Y - l1.Y) / A);
-
-			return u;
+			return ul;
 		}
 
 		// finds how much of its trajectory a moving point crossed through when the distance separating it from point was d
@@ -75,11 +73,35 @@ namespace PoolGame
 		// finds shortest scalar distance between two lines
 		public static float SmallestDistanceTwoLines((Vector2, Vector2) line1, (Vector2, Vector2) line2)
 		{
-			// finds shortest distance between line and point for both verteces and takes shorter
+			// initial points and outward vector components
+			Vector2 p1 = line1.Item1, p2 = line2.Item1, 
+				v1 = line1.Item2 - p1, v2 = line2.Item2 - p2;
+
+			// found at https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
+			float det = Cross2D(v1, v2);
+			float u1 = Cross2D(p2 - p1, v2) / det;
+			float u2 = Cross2D(p2 - p1, v1) / det;
+
+			// checks to see if lines ever intersect
+			bool linesIntersect = Math.Abs(det) > 0.00001f
+				&& u1 > 0f && u1 < 1f
+				&& u2 > 0f && u2 < 1f;
+			if (linesIntersect)
+			{
+				return 0f;
+			}
+
+			// if lines never intersected then finds shortest distance between line and point for both verteces and takes shorter
 			float p1Dist = SmallestVectorLinePoint(line1, line2.Item1).Length();
 			float p2Dist = SmallestVectorLinePoint(line1, line2.Item2).Length();
 
 			return Math.Min(p1Dist, p2Dist);
+
+			// returns 2D cross product (determinant) of two 2D vectors
+			float Cross2D(Vector2 a, Vector2 b)
+			{
+				return a.X * b.Y - a.Y * b.X;
+			}
 		}
 
 		// finds shortest vector that can be drawn between a line and a point; found from http://paulbourke.net/geometry/pointlineplane/

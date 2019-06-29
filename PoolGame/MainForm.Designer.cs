@@ -66,6 +66,7 @@
 			// imgPowerBar
 			// 
 			this.imgPowerBar.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			this.imgPowerBar.Enabled = false;
 			this.imgPowerBar.Location = new System.Drawing.Point(529, 57);
 			this.imgPowerBar.Name = "imgPowerBar";
 			this.imgPowerBar.Size = new System.Drawing.Size(60, 500);

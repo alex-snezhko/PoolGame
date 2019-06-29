@@ -21,14 +21,14 @@ namespace PoolGame
 		// in SI units (for the game simulation)
 		public const float TABLE_WIDTH = 1.2192f; // width of playing area of table in m (4')
 		public const float TABLE_HEIGHT = 2.4384f; // height of playing area of table in m (8')
-		public const float COEFF_FRICTION = 0.15f;
+		public const float COEFF_FRICTION = 0.2f;
 		public static float tickInterval;	
 
 		public static PoolCue Cue { get; private set; }
 		// [0]: cue ball, [1-15]: num balls, [16-21]: walls
 		public static List<ICollider> Colliders { get; private set; }
 		// true when balls are moving, false when the player must shoot
-		public static bool InPlay { get; set; }
+		public static bool BallsMoving { get; set; }
 		// true if cue ball was scratched this shot
 		public static bool Scratched { get; set; }
 		// image of crosshair that appears when pointing at location to place scratched cue ball
@@ -39,7 +39,7 @@ namespace PoolGame
 		{
 			form = f;
 			tickInterval = tickInt / 1000f;
-			InPlay = false;
+			BallsMoving = false;
 			Scratched = false;
 			CreateBallImages();
 			imgCrosshair = new PictureBox()
@@ -127,7 +127,7 @@ namespace PoolGame
 					goto completed;
 				}
 			}
-			InPlay = false;
+			BallsMoving = false;
 			return;
 
 			completed:
@@ -162,10 +162,11 @@ namespace PoolGame
 		}
 
 		// finds earliest collision between 2 objects (if there is a collision); if no collision this frame returns null references
-		private static (Ball, ICollider) FindEarliestCollision(Ball[] balls, ref float minCompletion)
+		// minU represents the u value that the balls have all already traveled through
+		private static (Ball, ICollider) FindEarliestCollision(Ball[] balls, ref float minU)
 		{
 			// shortest portion of balls' single-frame trajectories crossed when a collision is detected anywhere
-			float shortest = 1f;
+			float shortestU = 1f;
 			// ball which collides with something the earliest
 			Ball colliderBall = null;
 			// object which participates in the earliest collision
@@ -182,12 +183,14 @@ namespace PoolGame
 				{
 					if (obstacle != ball)
 					{
-						// collision will occur
-						float? pathCompleted = obstacle.CollisionDistance(ball);
+						float u = obstacle.CollisionDistance(ball);
 						// finds object whose collision occurs before any other collider analyzed
-						if (pathCompleted != null && pathCompleted.Value < shortest && pathCompleted.Value > minCompletion)
+						bool thisFrame = !float.IsNaN(u) && u > 0f && u <= 1f;
+
+						// collision will occur
+						if (thisFrame && u < shortestU && u > minU)
 						{
-							shortest = pathCompleted.Value;
+							shortestU = u;
 							colliderBall = ball;
 							objectCollidedWith = obstacle;
 						}
@@ -195,7 +198,7 @@ namespace PoolGame
 				}
 			}
 
-			minCompletion = shortest;
+			minU = shortestU;
 			return (colliderBall, objectCollidedWith);
 		}
 

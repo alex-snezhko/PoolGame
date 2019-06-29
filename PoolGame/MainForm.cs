@@ -30,18 +30,18 @@ namespace PoolGame
 
 			this.MouseMove += (sender, e) =>
 			{
-				if(Scratched)
+				if (!BallsMoving && Scratched)
 				{
 					MoveCrossHair(e.Location);
 				}
-				else if (!InPlay)
-				{
-					Cue.ChangePos(sender, e);
-				}
 			};
+			this.MouseMove += MoveAndChargeCue;
+
+			this.MouseDown += MoveAndChargeCue;
+
 			this.MouseUp += (sender, e) =>
 			{
-				if (e.Button == MouseButtons.Left && !InPlay)
+				if (e.Button == MouseButtons.Left && !BallsMoving)
 				{
 					if (Scratched)
 					{
@@ -50,31 +50,35 @@ namespace PoolGame
 					else
 					{
 						Cue.Shoot(sender, e);
+
+						DrawShotPowerBar(0f);
+						BallsMoving = true;
+						MoveBalls();
+
+						// resets timer
+						this.timer.Stop();
+						this.timer.Start();
 					}
 				}
 			};
 
-			Cue.ShotCharging += (sender, power) =>
+			void MoveAndChargeCue(object sender, MouseEventArgs e)
 			{
-				DrawShotPowerBar(power);
-			};
-			// when pool cue has completed shot
-			Cue.ShotCompleted += (sender, e) =>
-			{
-				DrawShotPowerBar(0f);
-
-				InPlay = true;
-				MoveBalls();			
-
-				// resets timer
-				this.timer.Stop();
-				this.timer.Start();
-			};
+				if (!BallsMoving && !Scratched)
+				{
+					Cue.ChangePos(e.Location);
+					if (e.Button == MouseButtons.Left)
+					{
+						float power = Cue.ChargeShot();
+						DrawShotPowerBar(power);
+					}
+				}
+			}
 		}
 
 		private void Timer_Tick(object sender, EventArgs e)
 		{
-			if (InPlay)
+			if (BallsMoving)
 			{
 				MoveBalls();
 			}
