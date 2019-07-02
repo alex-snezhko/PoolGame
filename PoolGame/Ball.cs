@@ -15,8 +15,8 @@ namespace PoolGame
 		protected abstract float Mass { get; } // in kg
 		public const float RADIUS = 0.028575f; // in m
 
-		// how much of game frame's trajectory path this ball has completed
-		float pathCompletedInFrame = 0f;
+		// how much of this frame's trajectory this ball has already completed
+		public float PathCompleted { get; private set; } = 0f;
 
 		protected Ball(PictureBox pic)
 		{
@@ -29,22 +29,28 @@ namespace PoolGame
 			Velocity += force;
 		}
 
-		public (Vector2, Vector2) GetTrajectoryVector() => (Position, Position + Velocity * GameManager.tickInterval);
+		// gives single-frame trajectory of this ball
+		public (Vector2, Vector2) GetTrajectoryVector() => (Position, Position + Velocity * (1f - PathCompleted) * GameManager.tickInterval); 
 
 		// moves ball distance it would travel in one frame; only called if no collision was detected by CollidingWith()
 		// parameter determines how much of its single-frame trajectory this ball should move
-		public void Move(float completed)
+		public void Move(float newU)
 		{
 			if (Velocity != Vector2.Zero)
 			{
-				(Vector2, Vector2) t = GetTrajectoryVector();
-				Vector2 finalPos = t.Item1 + (t.Item2 - t.Item1) * (completed - pathCompletedInFrame);
+				float uToMove = newU - PathCompleted;
+				// small offset added if balls collide to make sure the balls dont overlap one another unintentionally
+				uToMove -= newU < 1f ? 0.0001f : 0f;
+
+				// new position to which this ball must move
+				Vector2 finalPos = Position + Velocity * uToMove * GameManager.tickInterval;
 
 				Position = finalPos;
-				Velocity = ApplyFriction(Velocity, GameManager.tickInterval * (completed - pathCompletedInFrame));	
+				Velocity = ApplyFriction(Velocity, GameManager.tickInterval * uToMove);	
 			}
 
-			pathCompletedInFrame = completed == 1f ? 0f : completed;
+			// resets this ball's u completed if it has fully completed frame's movement
+			PathCompleted = newU == 1f ? 0f : newU;
 
 			Vector2 ApplyFriction(Vector2 vel, float time)
 			{
@@ -57,26 +63,18 @@ namespace PoolGame
 
 		// returns float in [0-1] indicating how much of path objects completed when collided, or null if no collision
 		// note: this -> 'victim' ball, other -> likely the ball doing the colliding; moves the ball if a collision is detected
-		public float CollisionDistance(Ball ball)
+		public float CollisionDistance(Ball other)
 		{
 			(Vector2, Vector2) traj = GetTrajectoryVector();
-			(Vector2, Vector2) otherTraj = ball.GetTrajectoryVector();
+			(Vector2, Vector2) otherTraj = other.GetTrajectoryVector();
 
-			// smallest distance between the trajectories of the two balls in collision
-			/*float smallestDist = Velocity == Vector2.Zero ?
-				VectorFuncs.SmallestVectorLinePoint(otherTraj, Position).Length() :
-				VectorFuncs.SmallestDistanceTwoLines(otherTraj, traj);
-
-			if (smallestDist > 2 * RADIUS)
-			{
-				return null; // TODO: refactoring; not working, fix vectorfuncs
-			}*/
-
-			float completed = Velocity == Vector2.Zero ?
+			float u = Velocity == Vector2.Zero ?
 				VectorFuncs.PathCompletedAtDFromPoint(otherTraj, Position, 2 * RADIUS) :
 				VectorFuncs.PathCompletedAtDFromTrajectories(otherTraj, traj, 2 * RADIUS);
 
-			return completed;
+			// correctly calculates new u regardless of how many collisions have already occurred this frame
+			float netCompleted = other.PathCompleted + u * (1f - other.PathCompleted);
+			return netCompleted;
 		}
 
 		public void Collide(Ball other)

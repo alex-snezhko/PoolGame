@@ -80,7 +80,9 @@ namespace PoolGame
 		{
 			if (BallsMoving)
 			{
+				this.timer.Stop();
 				MoveBalls();
+				this.timer.Start();
 			}
 		}
 		

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using System.Numerics;
@@ -26,7 +27,10 @@ namespace PoolGame
 
 		public static PoolCue Cue { get; private set; }
 		// [0]: cue ball, [1-15]: num balls, [16-21]: walls
-		public static List<ICollider> Colliders { get; private set; }
+		public static ICollider[] Colliders { get; private set; }
+		// same contents as [0-15] of colliders, just here for efficiency
+		static Ball[] balls;
+
 		// true when balls are moving, false when the player must shoot
 		public static bool BallsMoving { get; set; }
 		// true if cue ball was scratched this shot
@@ -54,32 +58,36 @@ namespace PoolGame
 			form.Controls.Add(imgCrosshair);
 
 			// 16 balls, 6 walls, 6 pockets
-			Colliders = new List<ICollider>();
+			Colliders = new ICollider[16 + 6 + 6];
 
 			// add balls to colliders
-			Colliders.Add(new CueBall(ballImages[0]));
+			Colliders[0] = new CueBall(ballImages[0]);
 			for (int i = 1; i <= 15; i++)
 			{
-				Colliders.Add(new NumberBall(i, ballImages[i]));
+				Colliders[i] = new NumberBall(i, ballImages[i]);
 			}
 
 			// add walls to colliders
-			Colliders.Add(new Wall(Side.Top));
-			Colliders.Add(new Wall(Side.Top | Side.Left));
-			Colliders.Add(new Wall(Side.Top | Side.Right));
-			Colliders.Add(new Wall(Side.Bottom | Side.Left));
-			Colliders.Add(new Wall(Side.Bottom | Side.Right));
-			Colliders.Add(new Wall(Side.Bottom));
+			Colliders[16] = new Wall(Side.Top);
+			Colliders[17] = new Wall(Side.Top | Side.Left);
+			Colliders[18] = new Wall(Side.Top | Side.Right);
+			Colliders[19] = new Wall(Side.Bottom | Side.Left);
+			Colliders[20] = new Wall(Side.Bottom | Side.Right);
+			Colliders[21] = new Wall(Side.Bottom);
 
 			// add pockets to colliders
-			Colliders.Add(new Pocket(Side.Top | Side.Left));
-			Colliders.Add(new Pocket(Side.Top | Side.Right));
-			Colliders.Add(new Pocket(Side.Left));
-			Colliders.Add(new Pocket(Side.Right));
-			Colliders.Add(new Pocket(Side.Bottom | Side.Left));
-			Colliders.Add(new Pocket(Side.Bottom | Side.Right));
+			Colliders[22] = new Pocket(Side.Top | Side.Left);
+			Colliders[23] = new Pocket(Side.Top | Side.Right);
+			Colliders[24] = new Pocket(Side.Left);
+			Colliders[25] = new Pocket(Side.Right);
+			Colliders[26] = new Pocket(Side.Bottom | Side.Left);
+			Colliders[27] = new Pocket(Side.Bottom | Side.Right);
 
 			Cue = new PoolCue((CueBall)Colliders[0]);
+
+			// copies all balls from Colliders to balls field
+			balls = new Ball[16];
+			Array.Copy(Colliders, balls, 16);
 		}
 
 		private static void CreateBallImages()
@@ -117,8 +125,6 @@ namespace PoolGame
 		// moves balls to next frame
 		public static void MoveBalls()
 		{
-			Ball[] balls = Colliders.OfType<Ball>().ToArray();
-
 			foreach (Ball b in balls)
 			{
 				if (b.Velocity != Vector2.Zero)
@@ -134,11 +140,13 @@ namespace PoolGame
 
 			// portion of one frame's trajectory which each ball has passed through
 			float u = 0f;
+			/* continuously finds earliest collision (if there is one), 
+			 * moves all balls to the positions they were in during collision, 
+			 * then adjusts velocities of balls involved in collision */
 			do
 			{ 				
-				Ball colliderBall; // 'attacker' ball which collides with another object					   
-				ICollider objectCollidedWith; // 'victim' object in collision
-				(colliderBall, objectCollidedWith) = FindEarliestCollision(balls, ref u);
+				// 'attacker' ball and 'victim' object in collision
+				(Ball colliderBall, ICollider objectCollidedWith) = FindEarliestCollision(ref u);
 
 				// move every ball to shortest u
 				foreach (Ball b in balls)
@@ -163,7 +171,7 @@ namespace PoolGame
 
 		// finds earliest collision between 2 objects (if there is a collision); if no collision this frame returns null references
 		// minU represents the u value that the balls have all already traveled through
-		private static (Ball, ICollider) FindEarliestCollision(Ball[] balls, ref float minU)
+		private static (Ball, ICollider) FindEarliestCollision(ref float minU)
 		{
 			// shortest portion of balls' single-frame trajectories crossed when a collision is detected anywhere
 			float shortestU = 1f;
@@ -172,13 +180,18 @@ namespace PoolGame
 			// object which participates in the earliest collision
 			ICollider objectCollidedWith = null;
 
-			foreach (Ball ball in balls)
+			// creates list of moving balls (only these need to be checked for collisions)
+			List<Ball> movingBalls = new List<Ball>();
+			foreach (Ball b in balls)
 			{
-				if (ball.Velocity == Vector2.Zero)
+				if(b.Velocity != Vector2.Zero)
 				{
-					continue;
+					movingBalls.Add(b);
 				}
+			}
 
+			foreach (Ball ball in movingBalls)
+			{
 				foreach (ICollider obstacle in Colliders)
 				{
 					if (obstacle != ball)
@@ -206,14 +219,12 @@ namespace PoolGame
 		{
 			if (ball is CueBall)
 			{
-				Scratched = true;
-				// bring ball to a stop
-				ball.ApplyForce(-ball.Velocity);
+				Scratched = true;				
 			}
-			else
-			{
-				Colliders.Remove(ball);
-			}
+
+			// bring ball to a stop
+			ball.ApplyForce(-ball.Velocity);
+
 			ball.SetPictureBox(false);
 		}
 

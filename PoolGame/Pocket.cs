@@ -43,13 +43,16 @@ namespace PoolGame
 			(Vector2, Vector2) traj = ball.GetTrajectoryVector();
 
 			const float POCKET_RADIUS = 0.057f;
-			float completed = VectorFuncs.PathCompletedAtDFromPoint(traj, center, POCKET_RADIUS + Ball.RADIUS);
-			return completed;
+			float u = VectorFuncs.PathCompletedAtDFromPoint(traj, center, POCKET_RADIUS + Ball.RADIUS);
+
+			// correctly calculates new u regardless of how many collisions have already occurred this frame
+			float netCompleted = ball.PathCompleted + u * (1f - ball.PathCompleted);
+			return netCompleted;
 		}
 
-		public void Collide(Ball other)
+		public void Collide(Ball ball)
 		{
-			GameManager.PocketBall(other);
+			GameManager.PocketBall(ball);
 		}
 	}
 }

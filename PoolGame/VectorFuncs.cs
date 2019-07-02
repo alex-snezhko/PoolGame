@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using static System.Math;
 
 namespace PoolGame
 {
@@ -12,8 +13,8 @@ namespace PoolGame
 			Vector2 l1 = path.Item1, l2 = path.Item2, w1 = wall.Item1, w2 = wall.Item2;
 
 			// finds vector of d
-			double perpWallAngle = Math.Atan2(w2.Y - w1.Y, w2.X - w1.X) + Math.PI / 2;
-			Vector2 dVec = new Vector2(d * (float)Math.Cos(perpWallAngle), d * (float)Math.Sin(perpWallAngle));
+			double perpWallAngle = Atan2(w2.Y - w1.Y, w2.X - w1.X) + PI / 2;
+			Vector2 dVec = new Vector2(d * (float)Cos(perpWallAngle), d * (float)Sin(perpWallAngle));
 
 			float num = (w1.X + dVec.X - l1.X) * (w2.Y - w1.Y) - (w1.Y + dVec.Y - l1.Y) * (w2.X - w1.X);
 			float den = (l2.X - l1.X) * (w2.Y - w1.Y) - (l2.Y - l1.Y) * (w2.X - w1.X);
@@ -25,9 +26,17 @@ namespace PoolGame
 				(l1.Y - w1.Y - dVec.Y + ul * (l2.Y - l1.Y)) / (w2.Y - w1.Y) :
 				(l1.X - w1.X - dVec.X + ul * (l2.X - l1.X)) / (w2.X - w1.X);
 
-			if (uw < 0f || uw > 1f)
+			// alternative u checked if trajectory is believed to touch the corner of a wall
+			float altU;
+			if (uw < 0f)
 			{
-				return float.NaN;
+				altU = PathCompletedAtDFromPoint(path, w1, d);
+				return altU;
+			}
+			else if (uw > 1f)
+			{
+				altU = PathCompletedAtDFromPoint(path, w2, d);
+				return altU;
 			}
 
 			return ul;
@@ -36,16 +45,21 @@ namespace PoolGame
 		// finds how much of its trajectory a moving point crossed through when the distance separating it from point was d
 		public static float PathCompletedAtDFromPoint((Vector2, Vector2) path, Vector2 p, float d)
 		{
-			Vector2 ti = path.Item1, tf = path.Item2;
+			// i = li + u(lf - li)
+			// i = p + d(dUnitVec)
+			// dUx^2 + dUy^2 = 1
+
+			Vector2 li = path.Item1, lf = path.Item2;
 			// quadratic formula- derived
-			double a = Math.Pow(tf.X - ti.X, 2) + Math.Pow(tf.Y - ti.Y, 2);
-			double b = 2 * ((ti.X - p.X) * (tf.X - ti.X) + (ti.Y - p.Y) * (tf.Y - ti.Y));
-			double c = -Math.Pow(d, 2) + Math.Pow(ti.Y - p.Y, 2) + Math.Pow(ti.X - p.X, 2);
 
-			double plus = (-b + Math.Sqrt(Math.Pow(b, 2) - 4 * a * c)) / (2 * a);
-			double minus = (-b - Math.Sqrt(Math.Pow(b, 2) - 4 * a * c)) / (2 * a);
+			double a = Pow(lf.X - li.X, 2) + Pow(lf.Y - li.Y, 2);
+			double b = 2 * ((li.X - p.X) * (lf.X - li.X) + (li.Y - p.Y) * (lf.Y - li.Y));
+			double c = -Pow(d, 2) + Pow(li.X - p.X, 2) + Pow(li.Y - p.Y, 2);
 
-			float u = (float)Math.Min(plus, minus);
+			double plus = (-b + Sqrt(b * b - 4 * a * c)) / (2 * a);
+			double minus = (-b - Sqrt(b * b - 4 * a * c)) / (2 * a);
+
+			float u = (float)Min(plus, minus);
 			return u;
 		}
 
@@ -59,14 +73,14 @@ namespace PoolGame
 			float dLix = l2i.X - l1i.X, dLiy = l2i.Y - l1i.Y;
 
 			// quadratic formula- derived
-			double a = Math.Pow(dL2x - dL1x, 2) + Math.Pow(dL2y - dL1y, 2);
+			double a = Pow(dL2x - dL1x, 2) + Pow(dL2y - dL1y, 2);
 			double b = 2 * ((dL2x - dL1x) * dLix + (dL2y - dL1y) * dLiy);
-			double c = Math.Pow(dLix, 2) + Math.Pow(dLiy, 2) - Math.Pow(d, 2);
+			double c = Pow(dLix, 2) + Pow(dLiy, 2) - Pow(d, 2);
 
-			double plus = (-b + Math.Sqrt(Math.Pow(b, 2) - 4 * a * c)) / (2 * a);
-			double minus = (-b - Math.Sqrt(Math.Pow(b, 2) - 4 * a * c)) / (2 * a);
+			double plus = (-b + Sqrt(b * b - 4 * a * c)) / (2 * a);
+			double minus = (-b - Sqrt(b * b - 4 * a * c)) / (2 * a);
 
-			float u = (float)Math.Min(plus, minus);
+			float u = (float)Min(plus, minus);
 			return u;
 		}
 
@@ -83,7 +97,7 @@ namespace PoolGame
 			float u2 = Cross2D(p2 - p1, v1) / det;
 
 			// checks to see if lines ever intersect
-			bool linesIntersect = Math.Abs(det) > 0.00001f
+			bool linesIntersect = Abs(det) > 0.00001f
 				&& u1 > 0f && u1 < 1f
 				&& u2 > 0f && u2 < 1f;
 			if (linesIntersect)
@@ -95,7 +109,7 @@ namespace PoolGame
 			float p1Dist = SmallestVectorLinePoint(line1, line2.Item1).Length();
 			float p2Dist = SmallestVectorLinePoint(line1, line2.Item2).Length();
 
-			return Math.Min(p1Dist, p2Dist);
+			return Min(p1Dist, p2Dist);
 
 			// returns 2D cross product (determinant) of two 2D vectors
 			float Cross2D(Vector2 a, Vector2 b)

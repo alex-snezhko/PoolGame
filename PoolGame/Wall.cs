@@ -87,7 +87,7 @@ namespace PoolGame
 		}
 
 		// returns float in [0-1] indicating how much of path objects completed when collided, or null if no collision
-		public float CollisionDistance(Ball other)
+		public float CollisionDistance(Ball ball)
 		{
 			if (side == (Bottom | Right))
 			{
@@ -95,7 +95,7 @@ namespace PoolGame
 			}
 
 
-			(Vector2, Vector2) traj = other.GetTrajectoryVector();			
+			(Vector2, Vector2) traj = ball.GetTrajectoryVector();			
 
 			// distance to each wall
 			float dD1 = VectorFuncs.SmallestDistanceTwoLines(diagWall1, traj);
@@ -117,15 +117,18 @@ namespace PoolGame
 			}
 
 			float u = VectorFuncs.PathCompletedAtDFromWall(traj, nearestWall, Ball.RADIUS);
-			return u; // TODO: balls sometimes escape from table (could be when near corners)
+
+			// correctly calculates new u regardless of how many collisions have already occurred this frame
+			float netCompleted = ball.PathCompleted + u * (1f - ball.PathCompleted);
+			return netCompleted;
 		}
 
-		public void Collide(Ball other)
+		public void Collide(Ball ball)
 		{
 			
-			Vector2 fromD1 = VectorFuncs.SmallestVectorLinePoint(diagWall1, other.Position);
-			Vector2 fromMain = VectorFuncs.SmallestVectorLinePoint(mainWall, other.Position);
-			Vector2 fromD2 = VectorFuncs.SmallestVectorLinePoint(diagWall2, other.Position);
+			Vector2 fromD1 = VectorFuncs.SmallestVectorLinePoint(diagWall1, ball.Position);
+			Vector2 fromMain = VectorFuncs.SmallestVectorLinePoint(mainWall, ball.Position);
+			Vector2 fromD2 = VectorFuncs.SmallestVectorLinePoint(diagWall2, ball.Position);
 
 			// find direction from wall piece hit to ball
 			float dD1 = fromD1.Length(), dM = fromMain.Length(), dD2 = fromD2.Length();
@@ -136,10 +139,10 @@ namespace PoolGame
 			else { toWallUnit = Vector2.Normalize(fromD2); }
 
 			// finds vector normal to the wall which can be added to current ball velocity to obtain new velocity vector
-			float len = -2 * (other.Velocity.X * toWallUnit.X + other.Velocity.Y * toWallUnit.Y) / toWallUnit.LengthSquared();
+			float len = -2 * (ball.Velocity.X * toWallUnit.X + ball.Velocity.Y * toWallUnit.Y) / toWallUnit.LengthSquared();
 			Vector2 normal = toWallUnit * len;
 
-			other.ApplyForce(normal);
+			ball.ApplyForce(normal);
 		}
 	}
 }
