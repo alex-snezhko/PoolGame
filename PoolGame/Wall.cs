@@ -89,12 +89,6 @@ namespace PoolGame
 		// returns float in [0-1] indicating how much of path objects completed when collided, or null if no collision
 		public float CollisionDistance(Ball ball)
 		{
-			if (side == (Bottom | Right))
-			{
-				float a = 1; // debug
-			}
-
-
 			(Vector2, Vector2) traj = ball.GetTrajectoryVector();			
 
 			// distance to each wall

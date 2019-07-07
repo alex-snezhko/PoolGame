@@ -95,10 +95,14 @@ namespace PoolGame
 			ballImage.Refresh();
 		}
 
-		public virtual void SetPictureBox(bool enabled)
+		public virtual void Pocket()
 		{
-			ballImage.Visible = enabled;
-			MovePictureBox();
-		}		
+			GameManager.Colliders.Remove(this);
+			GameManager.ActiveBalls.Remove(this);
+
+			
+
+			ballImage.Visible = false;
+		}
 	}
 }

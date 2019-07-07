@@ -52,7 +52,7 @@ namespace PoolGame
 
 		public void Collide(Ball ball)
 		{
-			GameManager.PocketBall(ball);
+			ball.Pocket();
 		}
 	}
 }

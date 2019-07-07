@@ -40,9 +40,9 @@ namespace PoolGame
 		}
 
 		// shoots cue ball based on distance of cue striker relative to ball
-		public void Shoot(object sender, MouseEventArgs e)
+		public void Shoot(Point mouseLocation)
 		{
-			Vector2 mouseTablePoint = GameManager.FormToTablePoint(e.Location);
+			Vector2 mouseTablePoint = GameManager.FormToTablePoint(mouseLocation);
 			posRelativeToBall = mouseTablePoint - cueBall.Position;
 
 			// pool cue striker can only be a maximum of MAX_DIST meters away from the cue ball

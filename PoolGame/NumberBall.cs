@@ -73,9 +73,12 @@ namespace PoolGame
 			MovePictureBox();
 		}
 
-		public override void SetPictureBox(bool enabled)
+		public override void Pocket()
 		{
-			ballImage.Dispose();
+			base.Pocket();
+			GameManager.ActiveBalls.Remove(this);
+			//GameManager.Colliders.Remove(this); 
+			// TODO: work on this; make it work if cue ball gets in pocket as well
 		}
 	}
 }

@@ -17,6 +17,17 @@ namespace PoolGame
 		public void PlaceBall(Vector2 location)
 		{
 			Position = location;
+			// ball still considered moving after it is placed; negate this effect
+			Velocity = Vector2.Zero;
+
+			ballImage.Visible = true;
+			MovePictureBox();
+		}
+
+		public override void Pocket()
+		{
+			base.Pocket();
+			GameManager.Scratched = true;
 		}
 	}
 }
