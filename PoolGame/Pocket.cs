@@ -37,7 +37,7 @@ namespace PoolGame
 			}
 		}
 
-		// returns float in [0-1] indicating how much of path objects completed when collided, or null if no collision
+		// how much of its single-frame path the colliding ball completed at the time of collision; in [0-1] if collision detected
 		public float CollisionDistance(Ball ball)
 		{
 			(Vector2, Vector2) traj = ball.GetTrajectoryVector();

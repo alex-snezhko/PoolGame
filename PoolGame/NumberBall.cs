@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 using System.Numerics;
+using static PoolGame.GameManager;
 
 namespace PoolGame
 {
@@ -16,8 +18,8 @@ namespace PoolGame
 
 			// finds appropriate starting position and solid/striped based on number on the ball
 			solid = num <= 7 ? true : false;
-			float eightBallX = GameManager.TABLE_WIDTH / 2;
-			float eightBallY = 3 * GameManager.TABLE_HEIGHT / 4;
+			float eightBallX = TABLE_WIDTH / 2;
+			float eightBallY = 3 * TABLE_HEIGHT / 4;
 			float ballSeparation = 2 * RADIUS + 0.001f;
 			float cos60Deg = (float)Math.Cos(Math.PI / 3);
 			float sin60Deg = (float)Math.Sin(Math.PI / 3);
@@ -73,12 +75,31 @@ namespace PoolGame
 			MovePictureBox();
 		}
 
+		// display images of pocketed balls in section of GUI
 		public override void Pocket()
 		{
+			// restarts game if 8-ball pocketed but other balls have not been
+			if(number == 8 && BallsPocketed != 14)
+			{
+				//RestartGame();
+			}
+
 			base.Pocket();
-			GameManager.ActiveBalls.Remove(this);
-			//GameManager.Colliders.Remove(this); 
-			// TODO: work on this; make it work if cue ball gets in pocket as well
+
+			// balls will be displayed in a grid with 3 columns;
+			int row = BallsPocketed / 3;
+			int column = BallsPocketed % 3;
+
+			ballImage.Size = new Size(35, 35);
+
+			// coordinates of top-left point of grid where ball images will be placed
+			const int BEGIN_X = START_X + 2 * BORDER_WIDTH + PLAYAREA_W_PIX + 30;
+			const int BEGIN_Y = 600;
+			ballImage.Location = new Point(BEGIN_X + 40 * column, BEGIN_Y + 40 * row);
+
+			ballImage.BackColor = Color.FromKnownColor(KnownColor.Control);
+
+			BallsPocketed++;
 		}
 	}
 }

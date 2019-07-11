@@ -6,14 +6,15 @@ namespace PoolGame
 {
 	abstract class Ball : ICollider
 	{
+		// GUI image which represents this ball
 		protected readonly PictureBox ballImage;
 
-		// x, y; using pool table size of 1.2192m x 2.4384m (4'x8') with short side as x
+		// (x, y); using pool table size of 1.2192m x 2.4384m (4'x8') with short side as x; all values in SI units
 		public Vector2 Position { get; protected set; }
-		public Vector2 Velocity { get; protected set; } // in m/s
+		public Vector2 Velocity { get; protected set; }
 
-		protected abstract float Mass { get; } // in kg
-		public const float RADIUS = 0.028575f; // in m
+		protected abstract float Mass { get; }
+		public const float RADIUS = 0.028575f;
 
 		// how much of this frame's trajectory this ball has already completed
 		public float PathCompleted { get; private set; } = 0f;
@@ -24,16 +25,16 @@ namespace PoolGame
 			Velocity = Vector2.Zero;
 		}
 
-		public void ApplyForce(Vector2 force)
+		// changes ball's velocity by specified value
+		public void ApplyDeltaV(Vector2 force)
 		{
 			Velocity += force;
 		}
 
-		// gives single-frame trajectory of this ball
-		public (Vector2, Vector2) GetTrajectoryVector() => (Position, Position + Velocity * (1f - PathCompleted) * GameManager.tickInterval); 
+		// vector which reaches from current position to position at the end of this ball's single-frame path completed
+		public (Vector2, Vector2) GetTrajectoryVector() => (Position, Position + Velocity * (1f - PathCompleted) * GameManager.TickInterval); 
 
-		// moves ball distance it would travel in one frame; only called if no collision was detected by CollidingWith()
-		// parameter determines how much of its single-frame trajectory this ball should move
+		// moves ball to new position at which the ball's total single-frame path completed is that specified by parameter
 		public void Move(float newU)
 		{
 			if (Velocity != Vector2.Zero)
@@ -43,10 +44,10 @@ namespace PoolGame
 				uToMove -= newU < 1f ? 0.0001f : 0f;
 
 				// new position to which this ball must move
-				Vector2 finalPos = Position + Velocity * uToMove * GameManager.tickInterval;
+				Vector2 finalPos = Position + Velocity * uToMove * GameManager.TickInterval;
 
 				Position = finalPos;
-				Velocity = ApplyFriction(Velocity, GameManager.tickInterval * uToMove);	
+				Velocity = ApplyFriction(Velocity, GameManager.TickInterval * uToMove);	
 			}
 
 			// resets this ball's u completed if it has fully completed frame's movement
@@ -61,8 +62,8 @@ namespace PoolGame
 			}
 		}
 
-		// returns float in [0-1] indicating how much of path objects completed when collided, or null if no collision
-		// note: this -> 'victim' ball, other -> likely the ball doing the colliding; moves the ball if a collision is detected
+		// how much of its single-frame path the colliding ball completed at the time of collision; in [0-1] if collision detected
+		// note: this -> 'victim' ball, other -> ball doing the colliding
 		public float CollisionDistance(Ball other)
 		{
 			(Vector2, Vector2) traj = GetTrajectoryVector();
@@ -84,10 +85,10 @@ namespace PoolGame
 			Velocity = v2;
 		}
 
-		// init parameter allows for placing this ball on the screen at game startup
+		// moves location of ballImage picturebox to this ball's current position on the table
 		public void MovePictureBox()
 		{			
-			Point ballCenter = GameManager.PositionToFormPoint(Position);
+			Point ballCenter = GameManager.TableToFormPoint(Position);
 			// picturebox location based off top left point; make correction from position (which is center of ball)
 			const int TL_PIX_OFFSET = (int)(RADIUS * GameManager.PLAYAREA_W_PIX / GameManager.TABLE_WIDTH);
 			ballImage.Location = ballCenter - new Size(TL_PIX_OFFSET, TL_PIX_OFFSET);
@@ -95,14 +96,11 @@ namespace PoolGame
 			ballImage.Refresh();
 		}
 
+		// called when this ball lands in a pocket
 		public virtual void Pocket()
 		{
 			GameManager.Colliders.Remove(this);
 			GameManager.ActiveBalls.Remove(this);
-
-			
-
-			ballImage.Visible = false;
 		}
 	}
 }

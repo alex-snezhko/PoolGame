@@ -89,6 +89,11 @@ namespace PoolGame
 		// returns float in [0-1] indicating how much of path objects completed when collided, or null if no collision
 		public float CollisionDistance(Ball ball)
 		{
+			if (side == (Top | Right))
+			{
+				int a = 1; // debug
+			}
+
 			(Vector2, Vector2) traj = ball.GetTrajectoryVector();			
 
 			// distance to each wall
@@ -96,13 +101,7 @@ namespace PoolGame
 			float dM = VectorFuncs.SmallestDistanceTwoLines(mainWall, traj);
 			float dD2 = VectorFuncs.SmallestDistanceTwoLines(diagWall2, traj);
 
-			(Vector2, Vector2) nearestWall;
-			float shortest;
-
-			// finds which wall the ball will collide with first
-			if (dD1 < dM && dD1 < dD2) { nearestWall = diagWall1; shortest = dD1; }
-			else if (dM < dD1 && dM < dD2) { nearestWall = mainWall; shortest = dM; }
-			else { nearestWall = diagWall2; shortest = dD2; }
+			float shortest = Math.Min(dD1, Math.Min(dM, dD2));
 
 			// no collision detected between this wall and specified ball
 			if (shortest > Ball.RADIUS)
@@ -110,16 +109,25 @@ namespace PoolGame
 				return float.NaN;
 			}
 
-			float u = VectorFuncs.PathCompletedAtDFromWall(traj, nearestWall, Ball.RADIUS);
+			float uD1 = VectorFuncs.PathCompletedAtDFromWall(traj, diagWall1, Ball.RADIUS);
+			float uM = VectorFuncs.PathCompletedAtDFromWall(traj, mainWall, Ball.RADIUS);
+			float uD2 = VectorFuncs.PathCompletedAtDFromWall(traj, diagWall2, Ball.RADIUS);
+
+			/* if any of u values are NaN, then set their values to arbitrary number (that is larger
+			 * than the max accepted u-value of 1) to make the Min() calculation work properly */
+			uD1 = float.IsNaN(uD1) ? 2f : uD1;
+			uM = float.IsNaN(uM) ? 2f : uM;
+			uD2 = float.IsNaN(uD2) ? 2f : uD2;
+
+			float minU = Math.Min(uD1, Math.Min(uM, uD2));
 
 			// correctly calculates new u regardless of how many collisions have already occurred this frame
-			float netCompleted = ball.PathCompleted + u * (1f - ball.PathCompleted);
+			float netCompleted = ball.PathCompleted + minU * (1f - ball.PathCompleted);
 			return netCompleted;
 		}
 
 		public void Collide(Ball ball)
-		{
-			
+		{ 		
 			Vector2 fromD1 = VectorFuncs.SmallestVectorLinePoint(diagWall1, ball.Position);
 			Vector2 fromMain = VectorFuncs.SmallestVectorLinePoint(mainWall, ball.Position);
 			Vector2 fromD2 = VectorFuncs.SmallestVectorLinePoint(diagWall2, ball.Position);
@@ -136,7 +144,7 @@ namespace PoolGame
 			float len = -2 * (ball.Velocity.X * toWallUnit.X + ball.Velocity.Y * toWallUnit.Y) / toWallUnit.LengthSquared();
 			Vector2 normal = toWallUnit * len;
 
-			ball.ApplyForce(normal);
+			ball.ApplyDeltaV(normal);
 		}
 	}
 }

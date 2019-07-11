@@ -14,7 +14,7 @@ namespace PoolGame
 
 			// finds vector of d
 			double perpWallAngle = Atan2(w2.Y - w1.Y, w2.X - w1.X) + PI / 2;
-			Vector2 dVec = new Vector2(d * (float)Cos(perpWallAngle), d * (float)Sin(perpWallAngle));
+			Vector2 dVec = d * new Vector2((float)Cos(perpWallAngle), (float)Sin(perpWallAngle));
 
 			float num = (w1.X + dVec.X - l1.X) * (w2.Y - w1.Y) - (w1.Y + dVec.Y - l1.Y) * (w2.X - w1.X);
 			float den = (l2.X - l1.X) * (w2.Y - w1.Y) - (l2.Y - l1.Y) * (w2.X - w1.X);

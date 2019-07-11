@@ -58,7 +58,7 @@ namespace PoolGame
 			}
 
 			// complete shot; max speed is 5 m/s (when cue is MAX_DIST away from cue ball)
-			cueBall.ApplyForce(5 / MAX_DIST * posRelativeToBall);
+			cueBall.ApplyDeltaV(5 / MAX_DIST * posRelativeToBall);
 		}
 	}
 }

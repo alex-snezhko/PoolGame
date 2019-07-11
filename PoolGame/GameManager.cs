@@ -12,24 +12,24 @@ namespace PoolGame
 	{
 		static MainForm form;
 
-		// in pixels (for the form)
+		// relevant measurements from form (in pixels)
 		public const int START_X = 30, START_Y = 30, // table offset from top left of form
 			PLAYAREA_W_PIX = 400, PLAYAREA_H_PIX = 800, BORDER_WIDTH = 33; //4"
 
-		// pool ball pictureboxes to be moved for UI 
-		public static PictureBox[] ballImages;
-
-		// in SI units (for the game simulation)
+		// relevant figures for game simulation calculations (in SI units)
 		public const float TABLE_WIDTH = 1.2192f; // width of playing area of table in m (4')
 		public const float TABLE_HEIGHT = 2.4384f; // height of playing area of table in m (8')
-		public const float COEFF_FRICTION = 0.2f;
-		public static float tickInterval;	
+		public const float COEFF_FRICTION = 0.2f; // coefficient of kinetic friction between ball and table
 
+		// interval between which game events are processed (also directly related to framerate)
+		public static float TickInterval { get; private set; }	
+
+		// cue object which controls striking cue ball at beginning of play
 		public static PoolCue Cue { get; private set; }
 		// [0]: cue ball, [1-15]: num balls, [16-21]: walls
 		public static List<ICollider> Colliders { get; private set; }
 		// keeps list of balls actively in play (not pocketed)
-		public static List<Ball> ActiveBalls { get; set; }
+		public static List<Ball> ActiveBalls { get; private set; }
 		// reference to cue ball object; same as Colliders[0] if cue ball is not scratched
 		static CueBall cueBall;
 
@@ -37,6 +37,11 @@ namespace PoolGame
 		public static bool BallsMoving { get; set; }
 		// true if cue ball was scratched this shot
 		public static bool Scratched { get; set; }
+		// number of balls that have been pocketed this game
+		public static int BallsPocketed { get; set; }
+
+		// pool ball pictureboxes to be moved for UI 
+		static PictureBox[] ballImages;
 		// image of crosshair that appears when pointing at location to place scratched cue ball
 		static PictureBox imgCrosshair;
 
@@ -44,9 +49,9 @@ namespace PoolGame
 		public static void BeginGame(MainForm f, int tickInt)
 		{
 			form = f;
-			tickInterval = tickInt / 1000f;
-			BallsMoving = false;
-			Scratched = false;
+			TickInterval = tickInt / 1000f;
+
+			// create GUI images
 			CreateBallImages();
 			imgCrosshair = new PictureBox()
 			{
@@ -59,7 +64,7 @@ namespace PoolGame
 			};
 			form.Controls.Add(imgCrosshair);
 
-			// 16 balls, 6 walls, 6 pockets
+			// 16 balls, 6 walls, 6 pockets in Colliders
 			Colliders = new List<ICollider>();
 			ActiveBalls = new List<Ball>();
 
@@ -125,21 +130,22 @@ namespace PoolGame
 			}
 		}
 
-		// moves balls to next frame
+		// moves balls to next frame (taking collisions that occur during the frame into account)
 		public static void MoveBalls()
 		{
+			// does not calculate movement and returns game to shooting phase if all balls have stopped moving			
 			foreach (Ball b in ActiveBalls)
 			{
 				if (b.Velocity != Vector2.Zero)
 				{
 					// a ball has been detected to be moving
-					goto completed;
+					goto ballMoving;
 				}
 			}
 			BallsMoving = false;
 			return;
 
-			completed:
+		ballMoving:
 
 			// portion of one frame's trajectory which each ball has passed through
 			float u = 0f;
@@ -174,7 +180,7 @@ namespace PoolGame
 
 		// finds earliest collision between 2 objects (if there is a collision); if no collision this frame returns null references
 		// minU represents the u value that the balls have all already traveled through
-		private static (Ball, ICollider) FindEarliestCollision(ref float minU)
+		private static (Ball, ICollider) FindEarliestCollision(ref float completedU)
 		{
 			// shortest portion of balls' single-frame trajectories crossed when a collision is detected anywhere
 			float shortestU = 1f;
@@ -198,24 +204,29 @@ namespace PoolGame
 			{
 				foreach (ICollider obstacle in Colliders)
 				{
-					if (obstacle != ball)
+					// prevents checking same collision twice and checking collision of ball against itself
+					bool alreadyChecked = obstacle == colliderBall && ball == objectCollidedWith;
+					if (obstacle == ball || alreadyChecked)
 					{
-						float u = obstacle.CollisionDistance(ball);
-						// finds object whose collision occurs before any other collider analyzed
-						bool thisFrame = !float.IsNaN(u) && u > 0f && u <= 1f;
-
-						// collision will occur
-						if (thisFrame && u < shortestU && u > minU)
-						{
-							shortestU = u;
-							colliderBall = ball;
-							objectCollidedWith = obstacle;
-						}
+						continue;
 					}
+
+					float u = obstacle.CollisionDistance(ball);
+					// finds object whose collision occurs before any other collider analyzed
+					bool thisFrame = !float.IsNaN(u) && u > 0f && u <= 1f;
+					// collision will occur
+					if (thisFrame && u < shortestU && u > completedU)
+					{
+						shortestU = u;
+						colliderBall = ball;
+						objectCollidedWith = obstacle;
+					}
+					// TODO: balls still sometimes pass through each other (although rare)
+					// TODO: game seems to freeze whenever ball gets pocketed in the same frame that another collision occurs
 				}
 			}
 
-			minU = shortestU;
+			completedU = shortestU;
 			return (colliderBall, objectCollidedWith);
 		}
 
@@ -266,7 +277,7 @@ namespace PoolGame
 		}
 
 		// converts pixel location on form to position on table in game units; (0,0) = bottom left of board
-		public static Point PositionToFormPoint(Vector2 location)
+		public static Point TableToFormPoint(Vector2 location)
 		{
 			// ratio of one game unit (in meters) to pixel length
 			const float M2P_COEFF = PLAYAREA_W_PIX / TABLE_WIDTH;

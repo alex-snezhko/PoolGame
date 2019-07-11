@@ -34,6 +34,7 @@
 			this.timer = new System.Windows.Forms.Timer(this.components);
 			this.label1 = new System.Windows.Forms.Label();
 			this.imgPowerBar = new System.Windows.Forms.PictureBox();
+			this.label2 = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.imgTable)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.imgPowerBar)).BeginInit();
 			this.SuspendLayout();
@@ -51,7 +52,6 @@
 			// 
 			// timer
 			// 
-			this.timer.Interval = 10;
 			this.timer.Tick += new System.EventHandler(this.Timer_Tick);
 			// 
 			// label1
@@ -73,11 +73,21 @@
 			this.imgPowerBar.TabIndex = 2;
 			this.imgPowerBar.TabStop = false;
 			// 
+			// label2
+			// 
+			this.label2.AutoSize = true;
+			this.label2.Location = new System.Drawing.Point(526, 575);
+			this.label2.Name = "label2";
+			this.label2.Size = new System.Drawing.Size(81, 13);
+			this.label2.TabIndex = 3;
+			this.label2.Text = "Balls Pocketed:";
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(684, 961);
+			this.Controls.Add(this.label2);
 			this.Controls.Add(this.imgPowerBar);
 			this.Controls.Add(this.label1);
 			this.Controls.Add(this.imgTable);
@@ -96,6 +106,7 @@
 		private System.Windows.Forms.Timer timer;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.PictureBox imgPowerBar;
+		private System.Windows.Forms.Label label2;
 	}
 }
 
