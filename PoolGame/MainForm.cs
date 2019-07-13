@@ -30,7 +30,7 @@ namespace PoolGame
 
 			this.MouseMove += (sender, e) =>
 			{
-				// moves crosshair image on GUI if cue ball is scratched to indicate where it will be placed
+				// moves crosshair image on GUI if cue ball is scratched to indicate where it will be placed 
 				if (!BallsMoving && Scratched)
 				{
 					MoveCrossHair(e.Location);

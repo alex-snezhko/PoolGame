@@ -221,7 +221,7 @@ namespace PoolGame
 						colliderBall = ball;
 						objectCollidedWith = obstacle;
 					}
-					// TODO: balls still sometimes pass through each other (although rare)
+					// TODO: balls still sometimes pass through each other (although rare) 
 				}
 			}
 
