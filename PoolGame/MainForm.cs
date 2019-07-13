@@ -31,7 +31,7 @@ namespace PoolGame
 			this.MouseMove += (sender, e) =>
 			{
 				// moves crosshair image on GUI if cue ball is scratched to indicate where it will be placed
-				if (!BallsMoving && Scratched)
+				if (!BallsMoving && cueBall.Pocketed)
 				{
 					MoveCrossHair(e.Location);
 				}
@@ -41,7 +41,7 @@ namespace PoolGame
 			this.MouseDown += MoveAndChargeCue;
 			void MoveAndChargeCue(object sender, MouseEventArgs e)
 			{
-				if (!BallsMoving && !Scratched)
+				if (!BallsMoving && !cueBall.Pocketed)
 				{
 					// adjusts angle of attack on cue ball
 					Cue.ChangePos(e.Location);
@@ -57,7 +57,7 @@ namespace PoolGame
 			{
 				if (e.Button == MouseButtons.Left && !BallsMoving)
 				{
-					if (Scratched)
+					if (cueBall.Pocketed)
 					{
 						PlaceCueBall(e.Location);
 					}
