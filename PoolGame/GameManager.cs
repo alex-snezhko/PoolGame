@@ -27,16 +27,14 @@ namespace PoolGame
 		// cue object which controls striking cue ball at beginning of play
 		public static PoolCue Cue { get; private set; }
 		// [0]: cue ball, [1-15]: num balls, [16-21]: walls
-		public static List<ICollider> Colliders { get; private set; }
-		// keeps list of balls actively in play (not pocketed)
-		public static List<Ball> ActiveBalls { get; private set; }
+		public static ICollider[] Colliders { get; private set; }
+		// same contents as [0-15] of Colliders; just here for understandibility
+		static Ball[] balls;
 		// reference to cue ball object; same as Colliders[0] if cue ball is not scratched
-		static CueBall cueBall;
+		public static CueBall cueBall;
 
 		// true when balls are moving, false when the player must shoot
 		public static bool BallsMoving { get; set; }
-		// true if cue ball was scratched this shot
-		public static bool Scratched { get; set; }
 		// number of balls that have been pocketed this game
 		public static int BallsPocketed { get; set; }
 
@@ -64,36 +62,36 @@ namespace PoolGame
 			};
 			form.Controls.Add(imgCrosshair);
 
-			// 16 balls, 6 walls, 6 pockets in Colliders
-			Colliders = new List<ICollider>();
-			ActiveBalls = new List<Ball>();
+			// 16 balls, 6 walls, 6 pockets
+			Colliders = new ICollider[16 + 6 + 6];
+			balls = new Ball[16];
 
 			// add balls to colliders (and list of balls)
 			cueBall = new CueBall(ballImages[0]);
-			Colliders.Add(cueBall);
-			ActiveBalls.Add(cueBall);
+			Colliders[0] = cueBall;
+			balls[0] = cueBall;
 			for (int i = 1; i <= 15; i++)
 			{
 				NumberBall nb = new NumberBall(i, ballImages[i]);
-				Colliders.Add(nb);
-				ActiveBalls.Add(nb);
+				Colliders[i] = nb;
+				balls[i] = nb;
 			}
 
 			// add walls to colliders
-			Colliders.Add(new Wall(Side.Top));
-			Colliders.Add(new Wall(Side.Top | Side.Left));
-			Colliders.Add(new Wall(Side.Top | Side.Right));
-			Colliders.Add(new Wall(Side.Bottom | Side.Left));
-			Colliders.Add(new Wall(Side.Bottom | Side.Right));
-			Colliders.Add(new Wall(Side.Bottom));
+			Colliders[16] = new Wall(Side.Top);
+			Colliders[17] = new Wall(Side.Top | Side.Left);
+			Colliders[18] = new Wall(Side.Top | Side.Right);
+			Colliders[19] = new Wall(Side.Bottom | Side.Left);
+			Colliders[20] = new Wall(Side.Bottom | Side.Right);
+			Colliders[21] = new Wall(Side.Bottom);
 
 			// add pockets to colliders
-			Colliders.Add(new Pocket(Side.Top | Side.Left));
-			Colliders.Add(new Pocket(Side.Top | Side.Right));
-			Colliders.Add(new Pocket(Side.Left));
-			Colliders.Add(new Pocket(Side.Right));
-			Colliders.Add(new Pocket(Side.Bottom | Side.Left));
-			Colliders.Add(new Pocket(Side.Bottom | Side.Right));
+			Colliders[22] = new Pocket(Side.Top | Side.Left);
+			Colliders[23] = new Pocket(Side.Top | Side.Right);
+			Colliders[24] = new Pocket(Side.Left);
+			Colliders[25] = new Pocket(Side.Right);
+			Colliders[26] = new Pocket(Side.Bottom | Side.Left);
+			Colliders[27] = new Pocket(Side.Bottom | Side.Right);
 
 			Cue = new PoolCue(cueBall);
 		}
@@ -134,9 +132,9 @@ namespace PoolGame
 		public static void MoveBalls()
 		{
 			// does not calculate movement and returns game to shooting phase if all balls have stopped moving			
-			foreach (Ball b in ActiveBalls)
+			foreach (Ball b in balls)
 			{
-				if (b.Velocity != Vector2.Zero)
+				if (!b.Pocketed && b.Velocity != Vector2.Zero)
 				{
 					// a ball has been detected to be moving
 					goto ballMoving;
@@ -157,10 +155,13 @@ namespace PoolGame
 				// 'attacker' ball and 'victim' object in collision
 				(Ball colliderBall, ICollider objectCollidedWith) = FindEarliestCollision(ref u);
 
-				// move every ball to shortest u
-				foreach (Ball b in ActiveBalls)
+				// move every active ball to shortest u
+				foreach (Ball b in balls)
 				{
-					b.Move(u);
+					if (!b.Pocketed)
+					{
+						b.Move(u);
+					}
 				}
 
 				// collision detected
@@ -171,10 +172,13 @@ namespace PoolGame
 			}
 			while (u < 1f);
 
-			// move all ball picture boxes once full trajectory has been completed
-			foreach (Ball b in ActiveBalls)
+			// move all active ball picture boxes once full trajectory has been completed
+			foreach (Ball b in balls)
 			{
-				b.MovePictureBox();
+				if (!b.Pocketed)
+				{
+					b.MovePictureBox();
+				}
 			}
 		}
 
@@ -191,9 +195,9 @@ namespace PoolGame
 
 			// creates list of moving balls (only these need to be checked for collisions)
 			List<Ball> movingBalls = new List<Ball>();
-			foreach (Ball b in ActiveBalls)
+			foreach (Ball b in balls)
 			{
-				if(b.Velocity != Vector2.Zero)
+				if(!b.Pocketed && b.Velocity != Vector2.Zero)
 				{
 					movingBalls.Add(b);
 				}
@@ -204,9 +208,10 @@ namespace PoolGame
 			{
 				foreach (ICollider obstacle in Colliders)
 				{
-					// prevents checking same collision twice and checking collision of ball against itself
+					// does not check collision on pocketed ball, collision on itself, or collision that has already been checked
+					bool pocketedBall = obstacle is Ball b && b.Pocketed;		
 					bool alreadyChecked = obstacle == colliderBall && ball == objectCollidedWith;
-					if (obstacle == ball || alreadyChecked)
+					if (pocketedBall || obstacle == ball || alreadyChecked)
 					{
 						continue;
 					}
@@ -252,12 +257,8 @@ namespace PoolGame
 			// makes sure the ball is being placed in a valid location
 			if (imgCrosshair.Visible)
 			{
-				ActiveBalls.Insert(0, cueBall);
 				cueBall.PlaceBall(FormToTablePoint(newLocation));
-
-				Scratched = false;
 				imgCrosshair.Visible = false;
-				return;
 			}
 		}
 
