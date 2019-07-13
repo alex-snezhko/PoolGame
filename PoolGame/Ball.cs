@@ -101,6 +101,7 @@ namespace PoolGame
 		{
 			GameManager.Colliders.Remove(this);
 			GameManager.ActiveBalls.Remove(this);
+			ballImage.Refresh();
 		}
 	}
 }

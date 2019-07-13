@@ -222,7 +222,6 @@ namespace PoolGame
 						objectCollidedWith = obstacle;
 					}
 					// TODO: balls still sometimes pass through each other (although rare)
-					// TODO: game seems to freeze whenever ball gets pocketed in the same frame that another collision occurs
 				}
 			}
 
