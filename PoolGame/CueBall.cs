@@ -21,6 +21,7 @@ namespace PoolGame
 			Velocity = Vector2.Zero;
 
 			ballImage.Visible = true;
+			Pocketed = false;
 			MovePictureBox();
 		}
 
@@ -28,7 +29,6 @@ namespace PoolGame
 		{
 			base.Pocket();
 			ballImage.Visible = false;
-			GameManager.Scratched = true;
 		}
 	}
 }

@@ -18,6 +18,8 @@ namespace PoolGame
 
 		// how much of this frame's trajectory this ball has already completed
 		public float PathCompleted { get; private set; } = 0f;
+		// true if this ball has already been pocketed this game
+		public bool Pocketed { get; protected set; }
 
 		protected Ball(PictureBox pic)
 		{
@@ -99,8 +101,12 @@ namespace PoolGame
 		// called when this ball lands in a pocket
 		public virtual void Pocket()
 		{
-			GameManager.Colliders.Remove(this);
-			GameManager.ActiveBalls.Remove(this);
+			Velocity = Vector2.Zero;
+			Position = Vector2.Zero;
+			Pocketed = true;
+
+			//GameManager.Colliders.Remove(this);
+			//GameManager.ActiveBalls.Remove(this);
 		}
 	}
 }

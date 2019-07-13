@@ -78,13 +78,13 @@ namespace PoolGame
 		// display images of pocketed balls in section of GUI
 		public override void Pocket()
 		{
+			base.Pocket();
+
 			// restarts game if 8-ball pocketed but other balls have not been
-			if(number == 8 && BallsPocketed != 14)
+			if (number == 8 && BallsPocketed != 14)
 			{
 				//RestartGame();
 			}
-
-			base.Pocket();
 
 			// balls will be displayed in a grid with 3 columns;
 			int row = BallsPocketed / 3;
@@ -98,6 +98,7 @@ namespace PoolGame
 			ballImage.Location = new Point(BEGIN_X + 40 * column, BEGIN_Y + 40 * row);
 
 			ballImage.BackColor = Color.FromKnownColor(KnownColor.Control);
+			ballImage.Refresh();
 
 			BallsPocketed++;
 		}
