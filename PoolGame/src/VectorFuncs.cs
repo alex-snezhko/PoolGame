@@ -1,5 +1,4 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 using static System.Math;
 
 namespace PoolGame
@@ -10,6 +9,17 @@ namespace PoolGame
 		// precondition: ball collides with wall at some point
 		public static float PathCompletedAtDFromWall((Vector2, Vector2) path, (Vector2, Vector2) wall, float d)
 		{
+			// vector equations set up and solved for ul when split into x and y components
+			// p = li + ul(lf - li)
+			// p = wi + uw(wf - wi) + d
+			// 
+			// l, w = vectors that are analagous to path, wall parameters
+			// p = point along l just touching wall at distance d
+			// d = distance vector from wall to p (will be perpendicular to wall)
+			// ul, uw = scalar fraction of interpolation along l and w at which the point p is reached
+			// 
+			// note: it is assumed that p will be to the 'left' of wall (if wall vector is thought of as pointing straight upward)
+
 			Vector2 l1 = path.Item1, l2 = path.Item2, w1 = wall.Item1, w2 = wall.Item2;
 
 			// finds vector of d
@@ -45,9 +55,15 @@ namespace PoolGame
 		// finds how much of its trajectory a moving point crossed through when the distance separating it from point was d
 		public static float PathCompletedAtDFromPoint((Vector2, Vector2) path, Vector2 p, float d)
 		{
+			// vector equations set up and solved for u when split into x and y components
 			// i = li + u(lf - li)
-			// i = p + d(dUnitVec)
+			// i = p + d(dU)
 			// dUx^2 + dUy^2 = 1
+			//
+			// l analagous to path parameter
+			// i = point at which path is distance d away from p
+			// u = scalar fraction of the interpolation of l needed to reach point i
+			// dU = unit vector separating i from p
 
 			Vector2 li = path.Item1, lf = path.Item2;
 			// quadratic formula- derived
@@ -66,6 +82,16 @@ namespace PoolGame
 		// finds how much of their trajectories 2 moving points crossed through when the distance separating them is d
 		public static float PathCompletedAtDFromTrajectories((Vector2, Vector2) line1, (Vector2, Vector2) line2, float d)
 		{
+			// vector equations set up and solved for u when split into x and y components
+			// p1 = l1i + u(l1f - l1i)
+			// p2 = l2i + u(l2f - l2i)
+			// d = dist(p1, p2)
+			//
+			// l1, l2 = line1, line2 parameters
+			// p1, p2 = points at which the 2 lines are separated by distance d
+			// u = scalar fraction of interpolation along both lines at which the lines hit p1, p2 respectively
+			// dist() = pythagorean distance formula
+
 			Vector2 l1i = line1.Item1, l1f = line1.Item2, l2i = line2.Item1, l2f = line2.Item2;
 			// deltas
 			float dL1x = l1f.X - l1i.X, dL2x = l2f.X - l2i.X;
@@ -91,12 +117,11 @@ namespace PoolGame
 			Vector2 p1 = line1.Item1, p2 = line2.Item1, 
 				v1 = line1.Item2 - p1, v2 = line2.Item2 - p2;
 
-			// found at https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
+			// first checks if lines intersect; found at https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
 			float det = Cross2D(v1, v2);
 			float u1 = Cross2D(p2 - p1, v2) / det;
 			float u2 = Cross2D(p2 - p1, v1) / det;
 
-			// checks to see if lines ever intersect
 			bool linesIntersect = Abs(det) > 0.00001f
 				&& u1 > 0f && u1 < 1f
 				&& u2 > 0f && u2 < 1f;

@@ -52,6 +52,7 @@
 			// 
 			// timer
 			// 
+			this.timer.Interval = 10;
 			this.timer.Tick += new System.EventHandler(this.Timer_Tick);
 			// 
 			// label1
@@ -92,7 +93,7 @@
 			this.Controls.Add(this.label1);
 			this.Controls.Add(this.imgTable);
 			this.Name = "MainForm";
-			this.Text = "Form1";
+			this.Text = "Pool Game";
 			((System.ComponentModel.ISupportInitialize)(this.imgTable)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.imgPowerBar)).EndInit();
 			this.ResumeLayout(false);

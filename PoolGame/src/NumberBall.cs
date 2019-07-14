@@ -81,24 +81,24 @@ namespace PoolGame
 			// restarts game if 8-ball pocketed but other balls have not been
 			if(number == 8 && BallsPocketed != 14)
 			{
-				//RestartGame();
+				NewGame();
+				return;
 			}
-
-			base.Pocket();
-
-			// balls will be displayed in a grid with 3 columns;
-			int row = BallsPocketed / 3;
-			int column = BallsPocketed % 3;
 
 			ballImage.Size = new Size(35, 35);
 
 			// coordinates of top-left point of grid where ball images will be placed
 			const int BEGIN_X = START_X + 2 * BORDER_WIDTH + PLAYAREA_W_PIX + 30;
 			const int BEGIN_Y = 600;
+
+			// balls will be displayed in a grid with 3 columns;
+			int row = BallsPocketed / 3;
+			int column = BallsPocketed % 3;
 			ballImage.Location = new Point(BEGIN_X + 40 * column, BEGIN_Y + 40 * row);
 
 			ballImage.BackColor = Color.FromKnownColor(KnownColor.Control);
 
+			base.Pocket();
 			BallsPocketed++;
 		}
 	}

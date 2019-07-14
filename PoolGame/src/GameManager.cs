@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Numerics;
 using PoolGame.Properties;
@@ -46,7 +44,7 @@ namespace PoolGame
 		static PictureBox imgCrosshair;
 
 		// begins or resets game
-		public static void BeginGame(MainForm f, int tickInt)
+		public static void Init(MainForm f, int tickInt)
 		{
 			form = f;
 			TickInterval = tickInt / 1000f;
@@ -63,6 +61,49 @@ namespace PoolGame
 				Visible = false
 			};
 			form.Controls.Add(imgCrosshair);
+
+			NewGame();
+		}
+
+		private static void CreateBallImages()
+		{
+			ballImages = new PictureBox[16];
+			ballImages[0] = new PictureBox() { Name = "cueBall", Image = Resources.cueball };
+			ballImages[1] = new PictureBox() { Name = "ball1", Image = Resources._1ball };
+			ballImages[2] = new PictureBox() { Name = "ball2", Image = Resources._2ball };
+			ballImages[3] = new PictureBox() { Name = "ball3", Image = Resources._3ball };
+			ballImages[4] = new PictureBox() { Name = "ball4", Image = Resources._4ball };
+			ballImages[5] = new PictureBox() { Name = "ball5", Image = Resources._5ball };
+			ballImages[6] = new PictureBox() { Name = "ball6", Image = Resources._6ball };
+			ballImages[7] = new PictureBox() { Name = "ball7", Image = Resources._7ball };
+			ballImages[8] = new PictureBox() { Name = "ball8", Image = Resources._8ball };
+			ballImages[9] = new PictureBox() { Name = "ball9", Image = Resources._9ball };
+			ballImages[10] = new PictureBox() { Name = "ball10", Image = Resources._10ball };
+			ballImages[11] = new PictureBox() { Name = "ball11", Image = Resources._11ball };
+			ballImages[12] = new PictureBox() { Name = "ball12", Image = Resources._12ball };
+			ballImages[13] = new PictureBox() { Name = "ball13", Image = Resources._13ball };
+			ballImages[14] = new PictureBox() { Name = "ball14", Image = Resources._14ball };
+			ballImages[15] = new PictureBox() { Name = "ball15", Image = Resources._15ball };
+		
+			foreach (PictureBox b in ballImages)
+			{
+				b.Enabled = false;
+				b.SizeMode = PictureBoxSizeMode.Zoom;	
+				form.Controls.Add(b);
+			}
+		}
+
+		// generates/resets game objects
+		public static void NewGame()
+		{
+			// sets all ball pictureboxes to appropriate appearance for game
+			const int BALL_DIAMETER = (int)(2 * Ball.RADIUS * (PLAYAREA_W_PIX / TABLE_WIDTH));
+			Color tableColor = Color.FromArgb(145, 196, 125);
+			foreach (PictureBox b in ballImages)
+			{
+				b.Size = new Size(BALL_DIAMETER, BALL_DIAMETER);
+				b.BackColor = tableColor;
+			}
 
 			// 16 balls, 6 walls, 6 pockets in Colliders
 			Colliders = new List<ICollider>();
@@ -96,38 +137,6 @@ namespace PoolGame
 			Colliders.Add(new Pocket(Side.Bottom | Side.Right));
 
 			Cue = new PoolCue(cueBall);
-		}
-
-		private static void CreateBallImages()
-		{
-			ballImages = new PictureBox[16];
-			ballImages[0] = new PictureBox() { Name = "cueBall", Image = Resources.cueball };
-			ballImages[1] = new PictureBox() { Name = "ball1", Image = Resources._1ball };
-			ballImages[2] = new PictureBox() { Name = "ball2", Image = Resources._2ball };
-			ballImages[3] = new PictureBox() { Name = "ball3", Image = Resources._3ball };
-			ballImages[4] = new PictureBox() { Name = "ball4", Image = Resources._4ball };
-			ballImages[5] = new PictureBox() { Name = "ball5", Image = Resources._5ball };
-			ballImages[6] = new PictureBox() { Name = "ball6", Image = Resources._6ball };
-			ballImages[7] = new PictureBox() { Name = "ball7", Image = Resources._7ball };
-			ballImages[8] = new PictureBox() { Name = "ball8", Image = Resources._8ball };
-			ballImages[9] = new PictureBox() { Name = "ball9", Image = Resources._9ball };
-			ballImages[10] = new PictureBox() { Name = "ball10", Image = Resources._10ball };
-			ballImages[11] = new PictureBox() { Name = "ball11", Image = Resources._11ball };
-			ballImages[12] = new PictureBox() { Name = "ball12", Image = Resources._12ball };
-			ballImages[13] = new PictureBox() { Name = "ball13", Image = Resources._13ball };
-			ballImages[14] = new PictureBox() { Name = "ball14", Image = Resources._14ball };
-			ballImages[15] = new PictureBox() { Name = "ball15", Image = Resources._15ball };
-
-			const int DIMENSION = (int)(2 * Ball.RADIUS * (PLAYAREA_W_PIX / TABLE_WIDTH));
-			Color tableColor = Color.FromArgb(145, 196, 125);
-			foreach (PictureBox b in ballImages)
-			{
-				b.Enabled = false;
-				b.Size = new Size(DIMENSION, DIMENSION);
-				b.SizeMode = PictureBoxSizeMode.Zoom;
-				b.BackColor = tableColor;
-				form.Controls.Add(b);
-			}
 		}
 
 		// moves balls to next frame (taking collisions that occur during the frame into account)
@@ -213,7 +222,7 @@ namespace PoolGame
 
 					float u = obstacle.CollisionDistance(ball);
 					// finds object whose collision occurs before any other collider analyzed
-					bool thisFrame = !float.IsNaN(u) && u > 0f && u <= 1f;
+					bool thisFrame = !float.IsNaN(u) && u >= 0f && u < 1f;
 					// collision will occur
 					if (thisFrame && u < shortestU && u > completedU)
 					{
@@ -221,8 +230,6 @@ namespace PoolGame
 						colliderBall = ball;
 						objectCollidedWith = obstacle;
 					}
-					// TODO: balls still sometimes pass through each other (although rare)
-					// TODO: game seems to freeze whenever ball gets pocketed in the same frame that another collision occurs
 				}
 			}
 
@@ -253,6 +260,7 @@ namespace PoolGame
 			// makes sure the ball is being placed in a valid location
 			if (imgCrosshair.Visible)
 			{
+				Colliders.Insert(0, cueBall);
 				ActiveBalls.Insert(0, cueBall);
 				cueBall.PlaceBall(FormToTablePoint(newLocation));
 

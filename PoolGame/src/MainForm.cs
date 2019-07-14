@@ -25,7 +25,7 @@ namespace PoolGame
 				DrawShotPowerBar(0f);
 			};
 
-			BeginGame(this, this.timer.Interval);
+			Init(this, this.timer.Interval);
 			this.imgTable.SendToBack();
 
 			this.MouseMove += (sender, e) =>
@@ -39,6 +39,7 @@ namespace PoolGame
 
 			this.MouseMove += MoveAndChargeCue;
 			this.MouseDown += MoveAndChargeCue;
+			// readjusts position of cue
 			void MoveAndChargeCue(object sender, MouseEventArgs e)
 			{
 				if (!BallsMoving && !Scratched)
@@ -47,7 +48,7 @@ namespace PoolGame
 					Cue.ChangePos(e.Location);
 					if (e.Button == MouseButtons.Left)
 					{
-						float power = Cue.ChargeShot();
+						float power = Cue.ShotPower();
 						DrawShotPowerBar(power);
 					}
 				}

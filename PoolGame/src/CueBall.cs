@@ -25,9 +25,9 @@ namespace PoolGame
 		}
 
 		public override void Pocket()
-		{
-			base.Pocket();
+		{			
 			ballImage.Visible = false;
+			base.Pocket();
 			GameManager.Scratched = true;
 		}
 	}
