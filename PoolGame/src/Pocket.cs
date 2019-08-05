@@ -45,14 +45,20 @@ namespace PoolGame
 			const float POCKET_RADIUS = 0.057f;
 			float u = VectorFuncs.PathCompletedAtDFromPoint(traj, center, POCKET_RADIUS + Ball.RADIUS);
 
-			// correctly calculates new u regardless of how many collisions have already occurred this frame
-			float netCompleted = ball.PathCompleted + u * (1f - ball.PathCompleted);
-			return netCompleted;
+			if(u > 0f && u < 1f)
+			{
+				int i = 3;
+			}
+			if(float.IsNaN(u))
+			{
+				int a = 3;
+			}
+			return u;
 		}
 
 		public void Collide(Ball ball)
 		{
-			ball.Pocket();
+			ball.Pocket(); // TODO: game freezing because when ball touches pocket it never even makes it here for some reason
 		}
 	}
 }

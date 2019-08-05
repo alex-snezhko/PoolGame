@@ -98,8 +98,8 @@ namespace PoolGame
 
 			ballImage.BackColor = Color.FromKnownColor(KnownColor.Control);
 
-			base.Pocket();
 			BallsPocketed++;
+			base.Pocket();
 		}
 	}
 }

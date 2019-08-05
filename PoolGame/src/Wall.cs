@@ -116,9 +116,7 @@ namespace PoolGame
 
 			float minU = Math.Min(uD1, Math.Min(uM, uD2));
 
-			// correctly calculates new u regardless of how many collisions have already occurred this frame
-			float netCompleted = ball.PathCompleted + minU * (1f - ball.PathCompleted);
-			return netCompleted;
+			return minU;
 		}
 
 		public void Collide(Ball ball)

@@ -73,9 +73,7 @@ namespace PoolGame
 				VectorFuncs.PathCompletedAtDFromPoint(otherTraj, Position, 2 * RADIUS) :
 				VectorFuncs.PathCompletedAtDFromTrajectories(otherTraj, traj, 2 * RADIUS);
 
-			// correctly calculates new u regardless of how many collisions have already occurred this frame
-			float netCompleted = other.PathCompleted + u * (1f - other.PathCompleted);
-			return netCompleted;
+			return u;
 		}
 
 		public void Collide(Ball other)
@@ -87,8 +85,9 @@ namespace PoolGame
 
 		// moves location of ballImage picturebox to this ball's current position on the table
 		public void MovePictureBox()
-		{			
+		{
 			Point ballCenter = GameManager.TableToFormPoint(Position);
+			//Point ballCenter = GameManager.TablePositionToPixel(Position);
 			// picturebox location based off top left point; make correction from position (which is center of ball)
 			const int TL_PIX_OFFSET = (int)(RADIUS * GameManager.PLAYAREA_W_PIX / GameManager.TABLE_WIDTH);
 			ballImage.Location = ballCenter - new Size(TL_PIX_OFFSET, TL_PIX_OFFSET);
