@@ -5,7 +5,7 @@ namespace PoolGame
 {
 	class Pocket : ICollider
 	{
-		// pocket represented by circle
+		// pocket represented by circle; center of this circle
 		readonly Vector2 center;
 
 		public Pocket(Side side)
@@ -44,21 +44,12 @@ namespace PoolGame
 
 			const float POCKET_RADIUS = 0.057f;
 			float u = VectorFuncs.PathCompletedAtDFromPoint(traj, center, POCKET_RADIUS + Ball.RADIUS);
-
-			if(u > 0f && u < 1f)
-			{
-				int i = 3;
-			}
-			if(float.IsNaN(u))
-			{
-				int a = 3;
-			}
 			return u;
 		}
 
 		public void Collide(Ball ball)
 		{
-			ball.Pocket(); // TODO: game freezing because when ball touches pocket it never even makes it here for some reason
+			ball.Pocket();
 		}
 	}
 }

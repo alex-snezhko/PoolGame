@@ -14,68 +14,71 @@ namespace PoolGame
 {
 	public partial class MainForm : Form
 	{
-		readonly Graphics powerBarGfx;
-
 		public MainForm()
 		{
 			InitializeComponent();
 			powerBarGfx = this.imgPowerBar.CreateGraphics();
-			this.Paint += (sender, e) =>
-			{
-				DrawShotPowerBar(0f);
-			};
 
 			Init(this, this.timer.Interval);
 			this.imgTable.SendToBack();
 
-			this.MouseMove += (sender, e) =>
-			{
-				// moves crosshair image on GUI if cue ball is scratched to indicate where it will be placed 
-				if (!BallsMoving && Scratched)
-				{
-					MoveCrossHair(e.Location);
-				}
-			};
+			AddFormEvents();
+			DrawShotPowerBar(0f);
 
-			this.MouseMove += MoveAndChargeCue;
-			this.MouseDown += MoveAndChargeCue;
-			// readjusts position of cue
-			void MoveAndChargeCue(object sender, MouseEventArgs e)
+			// adds handlers for various winform events such as mouse clicks
+			void AddFormEvents()
 			{
-				if (!BallsMoving && !Scratched)
+				this.MouseMove += (sender, e) =>
 				{
-					// adjusts angle of attack on cue ball
-					Cue.ChangePos(e.Location);
-					if (e.Button == MouseButtons.Left)
+					// moves crosshair image on GUI if cue ball is scratched to indicate where it will be placed 
+					if (!BallsMoving && Scratched)
 					{
-						float power = Cue.ShotPower();
-						DrawShotPowerBar(power);
+						MoveCrossHair(e.Location);
+					}
+				};
+
+				this.MouseMove += MoveAndChargeCue;
+				this.MouseDown += MoveAndChargeCue;
+				// readjusts position of cue
+				void MoveAndChargeCue(object sender, MouseEventArgs e)
+				{
+					// adjusts angle of attack on cue ball if in shooting phase
+					if (!BallsMoving && !Scratched)
+					{
+						Cue.ChangePos(e.Location);
+						// draws shot power if mouse held down
+						if (e.Button == MouseButtons.Left)
+						{
+							DrawShotPowerBar(Cue.ShotPower());
+						}
 					}
 				}
+
+				this.MouseUp += (sender, e) =>
+				{
+					if (e.Button == MouseButtons.Left && !BallsMoving)
+					{
+						// places cue ball onto table if left click while scratched
+						if (Scratched)
+						{
+							PlaceCueBall(e.Location);
+						}
+						// shoots cue ball if left click while not scratched
+						else
+						{
+							Cue.Shoot(e.Location);
+
+							DrawShotPowerBar(0f);
+							BallsMoving = true;
+							MoveBalls();
+
+							// resets timer
+							this.timer.Stop();
+							this.timer.Start();
+						}
+					}
+				};
 			}
-
-			this.MouseUp += (sender, e) =>
-			{
-				if (e.Button == MouseButtons.Left && !BallsMoving)
-				{
-					if (Scratched)
-					{
-						PlaceCueBall(e.Location);
-					}
-					else
-					{
-						Cue.Shoot(e.Location);
-
-						DrawShotPowerBar(0f);
-						BallsMoving = true;
-						MoveBalls();
-
-						// resets timer
-						this.timer.Stop();
-						this.timer.Start();
-					}
-				}
-			};	
 		}
 
 		private void Timer_Tick(object sender, EventArgs e)
@@ -87,13 +90,16 @@ namespace PoolGame
 				this.timer.Start();
 			}
 		}
-		
-		// draws bar of variable side on GUI indicating strength of charging shot
+
+		// graphics object for drawing shot power bar
+		readonly Graphics powerBarGfx;
+
+		// draws bar of variable size on GUI indicating strength of charging shot
 		private void DrawShotPowerBar(float val)
 		{
 			if(val > 1f)
 			{
-				return;
+				val = 1f;
 			}
 
 			// erase previously drawn bars

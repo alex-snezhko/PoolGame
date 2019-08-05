@@ -298,17 +298,5 @@ namespace PoolGame
 			Point screenPoint = new Point(tableXPix + START_X + BORDER_WIDTH, PLAYAREA_H_PIX - tableYPix + START_Y + BORDER_WIDTH);
 			return screenPoint;
 		}
-
-		// converts pixel location on form to position on table in game units; (0,0) = bottom left of board
-		public static Point TablePositionToPixel(Vector2 location)
-		{
-			// ratio of one game unit (in meters) to pixel length
-			const float M2P_COEFF = PLAYAREA_W_PIX / TABLE_WIDTH;
-			// pixel equivalent of vector location (0, 0 being bottom left)
-			int tableXPix = (int)(location.X * M2P_COEFF), tableYPix = (int)(location.Y * M2P_COEFF);
-
-			Point screenPoint = new Point(BORDER_WIDTH + tableXPix, BORDER_WIDTH + PLAYAREA_H_PIX - tableYPix);
-			return screenPoint;
-		}
 	}
 }

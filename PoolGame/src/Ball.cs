@@ -87,7 +87,6 @@ namespace PoolGame
 		public void MovePictureBox()
 		{
 			Point ballCenter = GameManager.TableToFormPoint(Position);
-			//Point ballCenter = GameManager.TablePositionToPixel(Position);
 			// picturebox location based off top left point; make correction from position (which is center of ball)
 			const int TL_PIX_OFFSET = (int)(RADIUS * GameManager.PLAYAREA_W_PIX / GameManager.TABLE_WIDTH);
 			ballImage.Location = ballCenter - new Size(TL_PIX_OFFSET, TL_PIX_OFFSET);
